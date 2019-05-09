@@ -1,7 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
   const applicationServerKey =
     'BI0WJGOAa7U5LNByjtGO90rTSYswH88vbijUcsM3zNAmASv__Dcvgs4J0_4g-guKaATcOnda24j6mZG7mY4HXPM';
-  const hash = 'dkjfgilrkjgre';
+  const hash = 'c4ca4238a0b923820dcc509a6f75849b0f956b470b17462c516449d91912ff51';
 
   let isPushEnabled = false;
 
@@ -202,29 +202,12 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function push_sendSubscriptionToServer(subscription, method) {
-    const key = subscription.getKey('p256dh');
-    const token = subscription.getKey('auth');
-
-    var data = new FormData();
+    let data = new FormData();
     data.append('hash', hash);
     data.append('subscription', JSON.stringify(subscription.toJSON()));
-    console.log(JSON.stringify(subscription.toJSON()));
+    data.append('email', document.querySelector('#push-subscription-email').value);
 
-
-    // let body = JSON.stringify({
-    //   endpoint: subscription.endpoint,
-    //   publicKey: key ? btoa(String.fromCharCode.apply(null, new Uint8Array(key))) : null,
-    //   authToken: token ? btoa(String.fromCharCode.apply(null, new Uint8Array(token))) : null,
-    //   contentEncoding: (PushManager.supportedContentEncodings || ['aesgcm'])[0],
-    // });
-    // data.append('endpoint', subscription.endpoint);
-    // data.append('publicKey', key ? btoa(String.fromCharCode.apply(null, new Uint8Array(key))) : null);
-    // data.append('authToken', token ? btoa(String.fromCharCode.apply(null, new Uint8Array(token))) : null);
-    // data.append('contentEncoding', (PushManager.supportedContentEncodings || ['aesgcm'])[0]);
-
-    // console.log(subscription.toJSON());
-
-    makeCorsRequest('http://local.everlytic.com/microservices/cors-test.php', 'POST', data);
+    makeCorsRequest('http://local.everlytic.com/public/push-notifications/subscribe', 'POST', data);
   }
 
   function createCORSRequest(method, url) {
