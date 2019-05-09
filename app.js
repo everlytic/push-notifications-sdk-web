@@ -1,6 +1,8 @@
 document.addEventListener('DOMContentLoaded', () => {
   const applicationServerKey =
     'BI0WJGOAa7U5LNByjtGO90rTSYswH88vbijUcsM3zNAmASv__Dcvgs4J0_4g-guKaATcOnda24j6mZG7mY4HXPM';
+  const hash = 'dkjfgilrkjgre';
+
   let isPushEnabled = false;
 
   const pushButton = document.querySelector('#push-subscription-button');
@@ -203,18 +205,57 @@ document.addEventListener('DOMContentLoaded', () => {
     const key = subscription.getKey('p256dh');
     const token = subscription.getKey('auth');
 
-    let body = JSON.stringify({
-      endpoint: subscription.endpoint,
-      publicKey: key ? btoa(String.fromCharCode.apply(null, new Uint8Array(key))) : null,
-      authToken: token ? btoa(String.fromCharCode.apply(null, new Uint8Array(token))) : null,
-      contentEncoding: (PushManager.supportedContentEncodings || ['aesgcm'])[0],
-    });
+    var data = new FormData();
+    data.append('hash', hash);
+    data.append('subscription', JSON.stringify(subscription.toJSON()));
+    console.log(JSON.stringify(subscription.toJSON()));
 
-    console.log(subscription.toJSON());
 
-    return fetch('push_subscription.php', {
-      method,
-      body: body,
-    }).then(() => subscription);
+    // let body = JSON.stringify({
+    //   endpoint: subscription.endpoint,
+    //   publicKey: key ? btoa(String.fromCharCode.apply(null, new Uint8Array(key))) : null,
+    //   authToken: token ? btoa(String.fromCharCode.apply(null, new Uint8Array(token))) : null,
+    //   contentEncoding: (PushManager.supportedContentEncodings || ['aesgcm'])[0],
+    // });
+    // data.append('endpoint', subscription.endpoint);
+    // data.append('publicKey', key ? btoa(String.fromCharCode.apply(null, new Uint8Array(key))) : null);
+    // data.append('authToken', token ? btoa(String.fromCharCode.apply(null, new Uint8Array(token))) : null);
+    // data.append('contentEncoding', (PushManager.supportedContentEncodings || ['aesgcm'])[0]);
+
+    // console.log(subscription.toJSON());
+
+    makeCorsRequest('http://local.everlytic.com/microservices/cors-test.php', 'POST', data);
+  }
+
+  function createCORSRequest(method, url) {
+    var xhr = new XMLHttpRequest();
+    if ("withCredentials" in xhr) {
+      xhr.open(method, url, true);
+    } else if (typeof XDomainRequest != "undefined") {
+      xhr = new XDomainRequest();
+      xhr.open(method, url);
+    } else {
+      xhr = null;
+    }
+    return xhr;
+  }
+
+  function makeCorsRequest(url, method, data = "") {
+    var xhr = createCORSRequest(method, url);
+
+    if (!xhr) {
+      alert('CORS not supported');
+      return;
+    }
+
+    xhr.onload = function () {
+      console.log('Response received', xhr.responseText);
+    };
+
+    xhr.onerror = function () {
+      console.log('There was an error making the request.');
+    };
+
+    xhr.send(data);
   }
 });
