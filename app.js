@@ -1,7 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
-  const applicationServerKey =
-    'BI0WJGOAa7U5LNByjtGO90rTSYswH88vbijUcsM3zNAmASv__Dcvgs4J0_4g-guKaATcOnda24j6mZG7mY4HXPM';
-  const hash = 'c4ca4238a0b923820dcc509a6f75849b0f956b470b17462c516449d91912ff51';
+  const publicKey = config.public_key;
 
   let isPushEnabled = false;
 
@@ -36,8 +34,6 @@ document.addEventListener('DOMContentLoaded', () => {
     return;
   }
 
-  // Check the current Notification permission.
-  // If its denied, the button should appears as such, until the user changes the permission manually
   if (Notification.permission === 'denied') {
     console.warn('Notifications are denied by the user');
     changePushButtonState('incompatible');
@@ -124,26 +120,18 @@ document.addEventListener('DOMContentLoaded', () => {
       .then(serviceWorkerRegistration =>
         serviceWorkerRegistration.pushManager.subscribe({
           userVisibleOnly: true,
-          applicationServerKey: urlBase64ToUint8Array(applicationServerKey),
+          applicationServerKey: urlBase64ToUint8Array(publicKey),
         })
       )
       .then(subscription => {
-        // Subscription was successful
-        // create subscription on your server
         return push_sendSubscriptionToServer(subscription, 'POST');
       })
       .then(subscription => subscription && changePushButtonState('enabled')) // update your UI
       .catch(e => {
         if (Notification.permission === 'denied') {
-          // The user denied the notification permission which
-          // means we failed to subscribe and the user will need
-          // to manually change the notification permission to
-          // subscribe to push messages
           console.warn('Notifications are denied by the user.');
           changePushButtonState('incompatible');
         } else {
-          // A problem occurred with the subscription; common reasons
-          // include network errors or the user skipped the permission
           console.error('Impossible to subscribe to push notifications', e);
           changePushButtonState('disabled');
         }
@@ -157,14 +145,12 @@ document.addEventListener('DOMContentLoaded', () => {
         changePushButtonState('disabled');
 
         if (!subscription) {
-          // We aren't subscribed to push, so set UI to allow the user to enable push
           return;
         }
 
-        // Keep your server in sync with the latest endpoint
         return push_sendSubscriptionToServer(subscription, 'PUT');
       })
-      .then(subscription => subscription && changePushButtonState('enabled')) // Set your UI to show they have subscribed for push messages
+      .then(subscription => subscription && changePushButtonState('enabled'))
       .catch(e => {
         console.error('Error when updating the subscription', e);
       });
@@ -173,29 +159,19 @@ document.addEventListener('DOMContentLoaded', () => {
   function push_unsubscribe() {
     changePushButtonState('computing');
 
-    // To unsubscribe from push messaging, you need to get the subscription object
     navigator.serviceWorker.ready
       .then(serviceWorkerRegistration => serviceWorkerRegistration.pushManager.getSubscription())
       .then(subscription => {
-        // Check that we have a subscription to unsubscribe
         if (!subscription) {
-          // No subscription object, so set the state
-          // to allow the user to subscribe to push
           changePushButtonState('disabled');
           return;
         }
 
-        // We have a subscription, unsubscribe
-        // Remove push subscription from server
         return push_sendSubscriptionToServer(subscription, 'DELETE');
       })
       .then(subscription => subscription.unsubscribe())
       .then(() => changePushButtonState('disabled'))
       .catch(e => {
-        // We failed to unsubscribe, this can lead to
-        // an unusual state, so  it may be best to remove
-        // the users data from your data store and
-        // inform the user that you have done so
         console.error('Error when unsubscribing the user', e);
         changePushButtonState('disabled');
       });
@@ -203,11 +179,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function push_sendSubscriptionToServer(subscription, method) {
     let data = new FormData();
-    data.append('hash', hash);
+    data.append('hash', config.hash);
     data.append('subscription', JSON.stringify(subscription.toJSON()));
     data.append('email', document.querySelector('#push-subscription-email').value);
 
-    makeCorsRequest('http://local.everlytic.com/public/push-notifications/subscribe', 'POST', data);
+    makeCorsRequest(config.base_url + '/public/push-notifications/subscribe', 'POST', data);
   }
 
   function createCORSRequest(method, url) {
