@@ -3,7 +3,7 @@ function EverlyticPushSDK () {
     let projectUuid = '';
     let publicKey = '';
 
-    const configDecoded = atob(config.hash);
+    const configDecoded = atob(everlyticPushConfig.hash);
     const configArray = configDecoded.split(";");
 
     configArray.forEach(function (configString) {
@@ -33,7 +33,7 @@ function EverlyticPushSDK () {
         throw 'Notifications are denied by the user';
     }
 
-    navigator.serviceWorker.register('serviceWorker.js').then(
+    navigator.serviceWorker.register('everlytic-push-sw.js').then(
         function() {
             console.log('[SW] Service worker has been registered');
         },
@@ -56,7 +56,7 @@ function EverlyticPushSDK () {
     }
 
     function checkNotificationPermission() {
-        return new Promise((resolve, reject) => {
+        return new Promise(function (resolve, reject) {
             if (Notification.permission === 'denied') {
                 return reject(new Error('Push messages are blocked.'));
             }
@@ -66,7 +66,7 @@ function EverlyticPushSDK () {
             }
 
             if (Notification.permission === 'default') {
-                return Notification.requestPermission().then(result => {
+                return Notification.requestPermission().then(function (result) {
                     if (result !== 'granted') {
                         reject(new Error('Bad permission result'));
                     }
@@ -83,14 +83,17 @@ function EverlyticPushSDK () {
         }
 
         return checkNotificationPermission()
-            .then(() => navigator.serviceWorker.ready)
-            .then(serviceWorkerRegistration =>
-                serviceWorkerRegistration.pushManager.subscribe({
-                    userVisibleOnly: true,
-                    applicationServerKey: urlBase64ToUint8Array(publicKey),
-                })
+            .then(function () {
+                return navigator.serviceWorker.ready;
+            })
+            .then(function (serviceWorkerRegistration) {
+                    return serviceWorkerRegistration.pushManager.subscribe({
+                        userVisibleOnly: true,
+                        applicationServerKey: urlBase64ToUint8Array(publicKey),
+                    });
+                }
             )
-            .then(subscription => {
+            .then(function (subscription) {
                 const contactData = {
                     "email": contact.email,
                     "push_token": subscription
@@ -112,7 +115,7 @@ function EverlyticPushSDK () {
                     }
                 }
             })
-            .catch(e => {
+            .catch(function (e) {
                 if (Notification.permission === 'denied') {
                     console.warn('Notifications are denied by the user.');
                 } else {
@@ -126,15 +129,19 @@ function EverlyticPushSDK () {
 
     this.unsubscribe = function (successCallback, errorCallback) {
         navigator.serviceWorker.ready
-            .then(serviceWorkerRegistration => serviceWorkerRegistration.pushManager.getSubscription())
-            .then(subscription => {
+            .then(function (serviceWorkerRegistration) {
+                return serviceWorkerRegistration.pushManager.getSubscription();
+            })
+            .then(function (subscription) {
                 if (!subscription) {
                     return;
                 }
 
                 // TODO put the CORS request here. Need to get the subscription ID some how.
             })
-            .then(subscription => subscription.unsubscribe())
+            .then(function (subscription) {
+                return subscription.unsubscribe();
+            })
             .catch(function(e) {
                 if (errorCallback && errorCallback instanceof Function) {
                     errorCallback(e);
@@ -158,7 +165,7 @@ function EverlyticPushSDK () {
         let xhr = createCORSRequest(method, url);
 
         if (!xhr) {
-            throw new Error('CORS not supported');
+            throw 'CORS not supported';
         }
 
         xhr.onload = function () {
