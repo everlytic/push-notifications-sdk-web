@@ -1,11 +1,11 @@
-function EverlyticPushSDK () {
+function EverlyticPushSDK() {
     let install = '';
     let projectUuid = '';
     let publicKey = '';
 
     initialize();
 
-    this.subscribe = function(contact, successCallback, errorCallback) {
+    this.subscribe = function (contact, successCallback, errorCallback) {
         if (!contact.email) {
             throw 'contact.email is required.';
         }
@@ -29,7 +29,7 @@ function EverlyticPushSDK () {
                         "push_token": JSON.stringify(subscription)
                     },
                     'platform': {
-                        'type': navigator.appName ,
+                        'type': navigator.appName,
                         'version': navigator.appVersion
                     },
                     'device': {
@@ -47,7 +47,7 @@ function EverlyticPushSDK () {
                 }
 
                 try {
-                    makeCorsRequest(install + '/servlet/push-notifications/subscribe', 'POST', data, function(response) {
+                    makeCorsRequest(install + '/servlet/push-notifications/subscribe', 'POST', data, function (response) {
                         if (response.status === 'success' && response.data) {
                             window.localStorage.setItem("subscription_id", response.data.subscription.pns_id);
                             successCallback();
@@ -91,7 +91,7 @@ function EverlyticPushSDK () {
                 };
 
                 try {
-                    makeCorsRequest(install + '/servlet/push-notifications/unsubscribe', 'POST', data, function(response) {
+                    makeCorsRequest(install + '/servlet/push-notifications/unsubscribe', 'POST', data, function (response) {
                         console.log(response.status);
                         if (response.status === 'success' && response.data) {
                             window.localStorage.removeItem("subscription_id");
@@ -111,15 +111,17 @@ function EverlyticPushSDK () {
             .then(function (subscription) {
                 return subscription.unsubscribe();
             })
-            .catch(function(e) {
+            .catch(function (e) {
                 if (errorCallback && errorCallback instanceof Function) {
                     errorCallback(e);
                 }
             });
     };
 
-    this.deliveryEvent = function(messageId, successCallback, errorCallback) {
-        console.log('hello');
+    this.event = function (eventType, messageId, successCallback, errorCallback) {
+        if (['deliveries', 'clicks', 'dismissals'].indexOf(eventType) === -1) {
+            throw 'Invalid event type';
+        }
         navigator.serviceWorker.ready
             .then(function (serviceWorkerRegistration) {
                 return serviceWorkerRegistration.pushManager.getSubscription();
@@ -130,14 +132,14 @@ function EverlyticPushSDK () {
                 }
 
                 let data = {
-                    'messageId': messageId,
+                    'message_id': messageId,
                     'subscription_id': window.localStorage.getItem('subscription_id'),
                     'datetime': new Date().toISOString(),
                     'metadata': {},
                 };
 
                 try {
-                    makeCorsRequest(install + '/servlet/push-notifications/deliveries', 'POST', data, function(response) {
+                    makeCorsRequest(install + '/servlet/push-notifications/' + eventType, 'POST', data, function (response) {
                         console.log(response.status);
                         if (response.status === 'success' && response.data) {
                             window.localStorage.removeItem("subscription_id");
@@ -154,24 +156,12 @@ function EverlyticPushSDK () {
 
                 return subscription;
             })
-            .then(function (subscription) {
-                return subscription.unsubscribe();
-            })
-            .catch(function(e) {
+            .catch(function (e) {
                 if (errorCallback && errorCallback instanceof Function) {
                     errorCallback(e);
                 }
             });
     };
-
-    this.clickEvent = function () {
-
-    };
-
-    this.dismissEvent = function () {
-
-    };
-
 
     /*****************************
      ***** Private Functions *****
@@ -213,17 +203,17 @@ function EverlyticPushSDK () {
         }
 
         navigator.serviceWorker.register('everlytic-push-sw.js').then(
-            function() {
+            function () {
                 console.log('[SW] Service worker has been registered');
             },
-            function(e) {
+            function (e) {
                 console.error('[SW] Service worker registration failed', e);
             }
         );
     }
 
     function uuidv4() {
-        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
             var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
             return v.toString(16);
         });
