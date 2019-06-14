@@ -3,44 +3,231 @@ function EverlyticPushSDK () {
     let projectUuid = '';
     let publicKey = '';
 
-    const configDecoded = atob(everlyticPushConfig.hash);
-    const configArray = configDecoded.split(";");
+    initialize();
 
-    configArray.forEach(function (configString) {
-        const configValue = configString.split('=');
-        if (configValue[0] === 'i') {
-            install = configValue[1];
-        } else if (configValue[0] === 'p') {
-            projectUuid = configValue[1];
-        } else if (configValue[0] === 'pubk') {
-            publicKey = configValue[1];
+    this.subscribe = function(contact, successCallback, errorCallback) {
+        if (!contact.email) {
+            throw 'contact.email is required.';
         }
-    });
 
-    if (!('serviceWorker' in navigator)) {
-        throw 'Service workers are not supported by this browser';
-    }
+        return checkNotificationPermission()
+            .then(function () {
+                return navigator.serviceWorker.ready;
+            })
+            .then(function (serviceWorkerRegistration) {
+                    return serviceWorkerRegistration.pushManager.subscribe({
+                        userVisibleOnly: true,
+                        applicationServerKey: urlBase64ToUint8Array(publicKey)
+                    });
+                }
+            )
+            .then(function (subscription) {
+                let data = {
+                    'push_project_uuid': projectUuid,
+                    'contact': {
+                        "email": contact.email,
+                        "push_token": JSON.stringify(subscription)
+                    },
+                    'platform': {
+                        'type': navigator.appName ,
+                        'version': navigator.appVersion
+                    },
+                    'device': {
+                        'id': window.localStorage.getItem('device_id'),
+                        'manufacturer': navigator.appCodeName,
+                        'model': navigator.userAgent,
+                        'type': 'N/A'
+                    },
+                    'datetime': new Date().toISOString(),
+                    'metadata': {},
+                };
 
-    if (!('PushManager' in window)) {
-        throw 'Push notifications are not supported by this browser';
-    }
+                if (contact.unique_id) {
+                    data.contact.unique_id = contact.unique_id;
+                }
 
-    if (!('showNotification' in ServiceWorkerRegistration.prototype)) {
-        throw 'Notifications are not supported by this browser';
-    }
+                try {
+                    makeCorsRequest(install + '/servlet/push-notifications/subscribe', 'POST', data, function(response) {
+                        if (response.status === 'success' && response.data) {
+                            window.localStorage.setItem("subscription_id", response.data.subscription.pns_id);
+                            successCallback();
+                        } else {
+                            errorCallback(response);
+                        }
+                    }, errorCallback);
+                } catch (e) {
+                    if (errorCallback && errorCallback instanceof Function) {
+                        errorCallback(e);
+                    }
+                }
+            })
+            .catch(function (e) {
+                if (Notification.permission === 'denied') {
+                    console.warn('Notifications are denied by the user.');
+                } else {
+                    console.error('Impossible to subscribe to push notifications', e);
+                }
+                if (errorCallback && errorCallback instanceof Function) {
+                    errorCallback(e);
+                }
+            });
+    };
 
-    if (Notification.permission === 'denied') {
-        throw 'Notifications are denied by the user';
-    }
+    this.unsubscribe = function (successCallback, errorCallback) {
+        navigator.serviceWorker.ready
+            .then(function (serviceWorkerRegistration) {
+                return serviceWorkerRegistration.pushManager.getSubscription();
+            })
+            .then(function (subscription) {
+                if (!subscription) {
+                    return;
+                }
 
-    navigator.serviceWorker.register('everlytic-push-sw.js').then(
-        function() {
-            console.log('[SW] Service worker has been registered');
-        },
-        function(e) {
-            console.error('[SW] Service worker registration failed', e);
+                let data = {
+                    'subscription_id': window.localStorage.getItem('subscription_id'),
+                    'device_id': window.localStorage.getItem('device_id'),
+                    'datetime': new Date().toISOString(),
+                    'metadata': {},
+                };
+
+                try {
+                    makeCorsRequest(install + '/servlet/push-notifications/unsubscribe', 'POST', data, function(response) {
+                        console.log(response.status);
+                        if (response.status === 'success' && response.data) {
+                            window.localStorage.removeItem("subscription_id");
+                            successCallback();
+                        } else {
+                            errorCallback(response);
+                        }
+                    }, errorCallback);
+                } catch (e) {
+                    if (errorCallback && errorCallback instanceof Function) {
+                        errorCallback(e);
+                    }
+                }
+
+                return subscription;
+            })
+            .then(function (subscription) {
+                return subscription.unsubscribe();
+            })
+            .catch(function(e) {
+                if (errorCallback && errorCallback instanceof Function) {
+                    errorCallback(e);
+                }
+            });
+    };
+
+    this.deliveryEvent = function(messageId, successCallback, errorCallback) {
+        console.log('hello');
+        navigator.serviceWorker.ready
+            .then(function (serviceWorkerRegistration) {
+                return serviceWorkerRegistration.pushManager.getSubscription();
+            })
+            .then(function (subscription) {
+                if (!subscription) {
+                    return;
+                }
+
+                let data = {
+                    'messageId': messageId,
+                    'subscription_id': window.localStorage.getItem('subscription_id'),
+                    'datetime': new Date().toISOString(),
+                    'metadata': {},
+                };
+
+                try {
+                    makeCorsRequest(install + '/servlet/push-notifications/deliveries', 'POST', data, function(response) {
+                        console.log(response.status);
+                        if (response.status === 'success' && response.data) {
+                            window.localStorage.removeItem("subscription_id");
+                            successCallback();
+                        } else {
+                            errorCallback(response);
+                        }
+                    }, errorCallback);
+                } catch (e) {
+                    if (errorCallback && errorCallback instanceof Function) {
+                        errorCallback(e);
+                    }
+                }
+
+                return subscription;
+            })
+            .then(function (subscription) {
+                return subscription.unsubscribe();
+            })
+            .catch(function(e) {
+                if (errorCallback && errorCallback instanceof Function) {
+                    errorCallback(e);
+                }
+            });
+    };
+
+    this.clickEvent = function () {
+
+    };
+
+    this.dismissEvent = function () {
+
+    };
+
+
+    /*****************************
+     ***** Private Functions *****
+     *****************************/
+
+    function initialize() {
+        const configDecoded = atob(everlyticPushConfig.hash);
+        const configArray = configDecoded.split(";");
+
+        configArray.forEach(function (configString) {
+            const configValue = configString.split('=');
+            if (configValue[0] === 'i') {
+                install = configValue[1];
+            } else if (configValue[0] === 'p') {
+                projectUuid = configValue[1];
+            } else if (configValue[0] === 'pubk') {
+                publicKey = configValue[1];
+            }
+        });
+
+        if (!('serviceWorker' in navigator)) {
+            throw 'Service workers are not supported by this browser';
         }
-    );
+
+        if (!('PushManager' in window)) {
+            throw 'Push notifications are not supported by this browser';
+        }
+
+        if (!('showNotification' in ServiceWorkerRegistration.prototype)) {
+            throw 'Notifications are not supported by this browser';
+        }
+
+        if (Notification.permission === 'denied') {
+            throw 'Notifications are denied by the user';
+        }
+
+        if (!window.localStorage.getItem('device_id')) {
+            window.localStorage.setItem('device_id', uuidv4());
+        }
+
+        navigator.serviceWorker.register('everlytic-push-sw.js').then(
+            function() {
+                console.log('[SW] Service worker has been registered');
+            },
+            function(e) {
+                console.error('[SW] Service worker registration failed', e);
+            }
+        );
+    }
+
+    function uuidv4() {
+        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+            var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+            return v.toString(16);
+        });
+    }
 
     function urlBase64ToUint8Array(base64String) {
         const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
@@ -77,91 +264,7 @@ function EverlyticPushSDK () {
         });
     }
 
-    this.subscribe = function(contact, successCallback, errorCallback) {
-        if (!contact.email) {
-            throw 'contact.email is required.';
-        }
-
-        return checkNotificationPermission()
-            .then(function () {
-                return navigator.serviceWorker.ready;
-            })
-            .then(function (serviceWorkerRegistration) {
-                    return serviceWorkerRegistration.pushManager.subscribe({
-                        userVisibleOnly: true,
-                        applicationServerKey: urlBase64ToUint8Array(publicKey),
-                    });
-                }
-            )
-            .then(function (subscription) {
-                const contactData = {
-                    "email": contact.email,
-                    "push_token": subscription
-                };
-                if (contact.unique_id) {
-                    contactData.unique_id = contact.unique_id;
-                }
-
-                let data = new FormData();
-                data.append('push_project_uuid', projectUuid);
-                data.append('contact', JSON.stringify(contactData));
-
-                try {
-                    makeCorsRequest(install + '/servlet/push-notifications/subscribe', 'POST', data, successCallback, errorCallback);
-                    // TODO: Need to store subscription ID from request.
-                } catch (e) {
-                    if (errorCallback && errorCallback instanceof Function) {
-                        errorCallback(e);
-                    }
-                }
-            })
-            .catch(function (e) {
-                if (Notification.permission === 'denied') {
-                    console.warn('Notifications are denied by the user.');
-                } else {
-                    console.error('Impossible to subscribe to push notifications', e);
-                }
-                if (errorCallback && errorCallback instanceof Function) {
-                    errorCallback(e);
-                }
-            });
-    };
-
-    this.unsubscribe = function (successCallback, errorCallback) {
-        navigator.serviceWorker.ready
-            .then(function (serviceWorkerRegistration) {
-                return serviceWorkerRegistration.pushManager.getSubscription();
-            })
-            .then(function (subscription) {
-                if (!subscription) {
-                    return;
-                }
-
-                // TODO put the CORS request here. Need to get the subscription ID some how.
-            })
-            .then(function (subscription) {
-                return subscription.unsubscribe();
-            })
-            .catch(function(e) {
-                if (errorCallback && errorCallback instanceof Function) {
-                    errorCallback(e);
-                }
-            });
-    };
-
-    this.deliveryEvent = function() {
-
-    };
-
-    this.clickEvent = function () {
-
-    };
-
-    this.dismissEvent = function () {
-
-    };
-
-    function makeCorsRequest(url, method, data = "", successCallback, errorCallback) {
+    function makeCorsRequest(url, method, data = {}, successCallback, errorCallback) {
         let xhr = createCORSRequest(method, url);
 
         if (!xhr) {
@@ -169,7 +272,9 @@ function EverlyticPushSDK () {
         }
 
         xhr.onload = function () {
-            console.log('Response received', xhr.responseText);
+            if (successCallback && successCallback instanceof Function) {
+                successCallback(JSON.parse(xhr.responseText));
+            }
         };
 
         xhr.onerror = function () {
@@ -181,13 +286,9 @@ function EverlyticPushSDK () {
             }
         };
 
-        xhr.onsuccess = function () {
-            if (successCallback && successCallback instanceof Function) {
-                successCallback();
-            }
-        };
-
-        xhr.send(data);
+        xhr.setRequestHeader('X-EV-Project-UUID', projectUuid);
+        xhr.setRequestHeader('Content-Type', 'application/json');
+        xhr.send(JSON.stringify(data));
     }
 
     function createCORSRequest(method, url) {

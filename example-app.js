@@ -11,19 +11,67 @@ document.addEventListener('DOMContentLoaded', () => {
 
   pushButton.addEventListener('click', function() {
     if (isPushEnabled) {
-      push_unsubscribe();
+      SDK.unsubscribe();
     } else {
       SDK.subscribe({
-              "email" : document.querySelector('#push-subscription-email')
+              "email" : document.querySelector('#push-subscription-email').value
           },
           function() {
-              alert('success');
+              console.log('subscribe success');
           },
           function(e) {
+              console.log(e);
               changePushButtonState('incompatible');
           }
       );
     }
+  });
+
+  document.querySelector('#push-unsubscription-button').addEventListener('click', function() {
+      SDK.unsubscribe(
+          function() {
+              console.log('unsubcribe success');
+          },
+          function(e) {
+              console.log(e);
+          }
+      );
+  });
+
+  document.querySelector('#push-delivery-button').addEventListener('click', function() {
+      SDK.deliveryEvent(
+          1,
+          function() {
+              console.log('delivery success');
+          },
+          function(e) {
+              console.log(e);
+          }
+      );
+  });
+
+  document.querySelector('#push-click-button').addEventListener('click', function() {
+      SDK.clickEvent(
+          1,
+          function() {
+              console.log('click success');
+          },
+          function(e) {
+              console.log(e);
+          }
+      );
+  });
+
+  document.querySelector('#push-dismiss-button').addEventListener('click', function() {
+      SDK.dismissEvent(
+          1,
+          function() {
+              console.log('dismiss success');
+          },
+          function(e) {
+              console.log(e);
+          }
+      );
   });
 
   function changePushButtonState(state) {
