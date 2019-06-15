@@ -47,7 +47,7 @@ function EverlyticPushSDK() {
                 }
 
                 try {
-                    makeCorsRequest(install + '/servlet/push-notifications/subscribe', 'POST', data, function (response) {
+                    makeRequest('subscribe', data, function (response) {
                         if (response.status === 'success' && response.data) {
                             window.localStorage.setItem("subscription_id", response.data.subscription.pns_id);
                             successCallback();
@@ -91,7 +91,7 @@ function EverlyticPushSDK() {
                 };
 
                 try {
-                    makeCorsRequest(install + '/servlet/push-notifications/unsubscribe', 'POST', data, function (response) {
+                    makeRequest('unsubscribe', data, function (response) {
                         console.log(response.status);
                         if (response.status === 'success' && response.data) {
                             window.localStorage.removeItem("subscription_id");
@@ -139,7 +139,7 @@ function EverlyticPushSDK() {
                 };
 
                 try {
-                    makeCorsRequest(install + '/servlet/push-notifications/' + eventType, 'POST', data, function (response) {
+                    makeRequest(eventType, 'POST', data, function (response) {
                         console.log(response.status);
                         if (response.status === 'success' && response.data) {
                             window.localStorage.removeItem("subscription_id");
@@ -254,43 +254,16 @@ function EverlyticPushSDK() {
         });
     }
 
-    function makeCorsRequest(url, method, data = {}, successCallback, errorCallback) {
-        let xhr = createCORSRequest(method, url);
-
-        if (!xhr) {
-            throw 'CORS not supported';
-        }
-
-        xhr.onload = function () {
-            if (successCallback && successCallback instanceof Function) {
-                successCallback(JSON.parse(xhr.responseText));
-            }
-        };
-
-        xhr.onerror = function () {
-            const err = 'There was a problem making the request.';
-            if (errorCallback && errorCallback instanceof Function) {
-                errorCallback(err);
-            } else {
-                throw err;
-            }
-        };
-
-        xhr.setRequestHeader('X-EV-Project-UUID', projectUuid);
-        xhr.setRequestHeader('Content-Type', 'application/json');
-        xhr.send(JSON.stringify(data));
-    }
-
-    function createCORSRequest(method, url) {
-        let xhr = new XMLHttpRequest();
-        if ("withCredentials" in xhr) {
-            xhr.open(method, url, true);
-        } else if (typeof XDomainRequest != "undefined") {
-            xhr = new XDomainRequest();
-            xhr.open(method, url);
-        } else {
-            xhr = null;
-        }
-        return xhr;
+    function makeRequest(type, data = {}, successCallback, errorCallback) {
+        navigator.serviceWorker.controller.postMessage({
+            "type": type,
+            'projectUuid': projectUuid,
+            "install": install,
+            "data": data,
+        }).then(function(response){
+            successCallback(response);
+        }).catch(function(e){
+            errorCallback(e);
+        });
     }
 }
