@@ -1,4 +1,5 @@
 self.addEventListener('push', function (event) {
+    console.log(event);
     if (!(self.Notification && self.Notification.permission === 'granted')) {
         return;
     }
@@ -7,14 +8,15 @@ self.addEventListener('push', function (event) {
         let notification = JSON.parse(notificationEncoded);
 
         talkToEverlytic('deliveries', {
-            'message_id': notification.message_id,
-            'subscription_id': notification.subscription_id,
+            'message_id': notification.data.message_id,
+            'subscription_id': notification.data.subscription_id,
             'metadata': {},
             'datetime': new Date().toISOString()
         });
 
         return self.registration.showNotification(notification.title, {
             body: notification.body,
+            data: notification.data
         });
     };
 
@@ -22,6 +24,26 @@ self.addEventListener('push', function (event) {
         const message = event.data.text();
         event.waitUntil(sendNotification(message));
     }
+});
+
+self.addEventListener('notificationclick', function(event){
+    console.log(event);
+    talkToEverlytic('clicks', {
+        'message_id': event.notification.data.message_id,
+        'subscription_id': event.notification.data.subscription_id,
+        'metadata': {},
+        'datetime': new Date().toISOString()
+    });
+});
+
+self.addEventListener('notificationclose', function(event){
+    console.log(event);
+    talkToEverlytic('dismissals', {
+        'message_id': event.notification.data.message_id,
+        'subscription_id': event.notification.data.subscription_id,
+        'metadata': {},
+        'datetime': new Date().toISOString()
+    });
 });
 
 self.addEventListener('message', function(event){
