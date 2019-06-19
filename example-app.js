@@ -38,6 +38,17 @@ document.addEventListener('DOMContentLoaded', () => {
         );
     });
 
+    document.querySelector('#push-anonymous-subscription-button').addEventListener('click', function () {
+        SDK.subscribeAnonymous(
+            function () {
+                console.log('anon subscribe success');
+            },
+            function (e) {
+                console.log(e);
+            }
+        );
+    });
+
     document.querySelector('#push-delivery-button').addEventListener('click', function () {
         SDK.event(
             'deliveries',
