@@ -85,7 +85,7 @@ function EverlyticPushSDK() {
      *****************************/
 
     function initialize() {
-        const configDecoded = atob(everlyticPushConfig.hash);
+        const configDecoded = atob(everlyticPushConfig);
         const configArray = configDecoded.split(";");
 
         configArray.forEach(function (configString) {
