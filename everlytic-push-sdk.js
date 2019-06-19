@@ -1,9 +1,14 @@
 function EverlyticPushSDK() {
+    const anonymousEmail = 'anonymous@everlytic.com';
     let install = '';
     let projectUuid = '';
     let publicKey = '';
 
     initialize();
+
+    this.subscribeAnonymous = function() {
+        this.subscribe({"email": anonymousEmail})
+    };
 
     this.subscribe = function (contact) {
         if (!contact.email) {
