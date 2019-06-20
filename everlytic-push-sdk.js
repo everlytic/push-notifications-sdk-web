@@ -47,7 +47,7 @@ function EverlyticPushSDK() {
                     'metadata': {},
                 };
 
-                if (contact.unique_id) {
+                if (contact.unique_id && contact.email !== anonymousEmail) {
                     data.contact.unique_id = contact.unique_id;
                 }
 
