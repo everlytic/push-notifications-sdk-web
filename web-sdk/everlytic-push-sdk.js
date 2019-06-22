@@ -1,13 +1,15 @@
-function EverlyticPushSDK() {
+window.EverlyticPushSDK = new function () {
     const anonymousEmail = 'anonymous@everlytic.com';
     let install = '';
     let projectUuid = '';
     let publicKey = '';
 
-    initialize();
+    this.init = function (config) {
+        initialize(config);
+    };
 
     this.subscribeAnonymous = function() {
-        this.subscribe({"email": anonymousEmail})
+        return this.subscribe({"email": anonymousEmail})
     };
 
     this.subscribe = function (contact) {
@@ -27,6 +29,7 @@ function EverlyticPushSDK() {
                 }
             )
             .then(function (subscription) {
+                console.log(subscription);
                 let data = {
                     'push_project_uuid': projectUuid,
                     'contact': {
@@ -51,7 +54,7 @@ function EverlyticPushSDK() {
                     data.contact.unique_id = contact.unique_id;
                 }
 
-                makeRequest('subscribe', data);
+                return makeRequest('subscribe', data);
             })
             .catch(function (e) {
                 if (Notification.permission === 'denied') {
@@ -89,8 +92,8 @@ function EverlyticPushSDK() {
      ***** Private Functions *****
      *****************************/
 
-    function initialize() {
-        const configDecoded = atob(everlyticPushConfig);
+    function initialize(config) {
+        const configDecoded = atob(config.hash);
         const configArray = configDecoded.split(";");
 
         configArray.forEach(function (configString) {
@@ -124,7 +127,7 @@ function EverlyticPushSDK() {
             window.localStorage.setItem('device_id', uuidv4());
         }
 
-        navigator.serviceWorker.register('everlytic-push-sw.js').then(
+        navigator.serviceWorker.register('load-worker.js').then(
             function () {
                 navigator.serviceWorker.controller.postMessage({
                     'type': 'initialize',
@@ -182,11 +185,25 @@ function EverlyticPushSDK() {
     }
 
     function makeRequest(type, data = {}) {
-        navigator.serviceWorker.controller.postMessage({
-            "type": type,
-            'projectUuid': projectUuid,
-            "install": install,
-            "data": data,
+        return new Promise(function(resolve, reject) {
+            let channel = new MessageChannel();
+            channel.port1.onmessage = function (event) {
+                if (event.data.error) {
+                    reject(event.data.error);
+                } else {
+                    resolve(event.data);
+                }
+            };
+
+            navigator.serviceWorker.controller.postMessage(
+                {
+                    "type": type,
+                    'projectUuid': projectUuid,
+                    "install": install,
+                    "data": data,
+                },
+                [channel.port2]
+            );
         });
     }
-}
+};

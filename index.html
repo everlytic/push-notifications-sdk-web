@@ -31,8 +31,24 @@
 </center>
 </body>
 
-<script type="text/javascript" src="everlytic-push-config.js"></script> <!-- Make sure you rename the default config and put in your own hash. -->
-<script type="text/javascript" src="everlytic-push-sdk.js"></script>
-<script type="text/javascript" src="example-app.js"></script>`
+<script type="text/javascript" src="http://localhost:8000/web-sdk/everlytic-push-sdk.js" async=""></script>
+<script>
+window.addEventListener('load', function() {
+    let SDK = window.EverlyticPushSDK;
+
+    SDK.init({
+        hash:"cD1lMjliNjNmNC05M2JlLTQxY2ItYmQ3NC0wM2Q0MDUyNzMzOWU7aT1odHRwOi8vbG9jYWwuZXZlcmx5dGljLmNvbTtwdWJrPUJDdnFhcm9pZHAzRnJvOGd6TGxFeXF5aHFmc2JqZVhXWkI2Mm9LQlRFZDBlNXVNWkNrWFllTGVqNXBKeWtkQU81ck9ZM1Y4Zk1tWXNNQzVFLXg0NEtjTQ==",
+    });
+
+    document.querySelector('#push-anonymous-subscription-button').addEventListener('click', function () {
+        SDK.subscribeAnonymous().then(function(result){
+            console.log(result);
+        }).catch(function(err){
+            console.log('error');
+        });
+    });
+});
+</script>
+<!--<script type="text/javascript" src="example-app.js"></script>`-->
 
 </html>

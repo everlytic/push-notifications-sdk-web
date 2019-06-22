@@ -3,7 +3,7 @@ self.addEventListener('push', function (event) {
         return;
     }
 
-    const sendNotification = notificationEncoded => {
+    const sendNotification = function(notificationEncoded) {
         let notification = JSON.parse(notificationEncoded);
 
         talkToEverlytic('deliveries', {
@@ -48,7 +48,9 @@ self.addEventListener('message', function(event){
         saveSetting('projectUuid', event.data.projectUuid);
         saveSetting('install', event.data.install);
     } else if (['subscribe', 'unsubscribe'].indexOf(event.data.type) !== -1) {
-        talkToEverlytic(event.data.type, event.data.data);
+        talkToEverlytic(event.data.type, event.data.data, function(result){
+            event.ports[0].postMessage(result);
+        });
     }
 });
 
@@ -82,7 +84,9 @@ function talkToEverlytic(type, data, successCallback) {
             }
         ).then(function(result){
             if (successCallback && successCallback instanceof Function) {
-                successCallback(result.json())
+                result.json().then(function(jsonResult){
+                    successCallback(jsonResult);
+                });
             }
         });
     });
