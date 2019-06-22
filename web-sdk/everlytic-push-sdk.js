@@ -22,74 +22,49 @@ window.EverlyticPushSDK = new function () {
             throw 'contact.email is required.';
         }
 
-        return checkNotificationPermission()
-            .then(function () {
-                return navigator.serviceWorker.ready;
-            })
-            .then(function (serviceWorkerRegistration) {
-                    return serviceWorkerRegistration.pushManager.subscribe({
-                        userVisibleOnly: true,
-                        applicationServerKey: urlBase64ToUint8Array(publicKey)
-                    });
-                }
-            )
-            .then(function (subscription) {
-                let data = {
-                    'push_project_uuid': projectUuid,
-                    'contact': {
-                        "email": contact.email,
-                        "push_token": JSON.stringify(subscription)
-                    },
-                    'platform': {
-                        'type': navigator.appName,
-                        'version': navigator.appVersion
-                    },
-                    'device': {
-                        'id': window.localStorage.getItem('device_id'),
-                        'manufacturer': navigator.appCodeName,
-                        'model': navigator.userAgent,
-                        'type': 'N/A'
-                    },
-                    'datetime': new Date().toISOString(),
-                    'metadata': {},
-                };
-
-                if (contact.unique_id && contact.email !== anonymousEmail) {
-                    data.contact.unique_id = contact.unique_id;
-                }
-
-                return makeRequest('subscribe', data);
-            })
-            .catch(function (e) {
-                if (Notification.permission === 'denied') {
-                    console.warn('Notifications are denied by the user.');
-                } else {
-                    console.error('Impossible to subscribe to push notifications', e);
-                }
+        return checkNotificationPermission().then(function () {
+            return navigator.serviceWorker.ready;
+        }).then(function (serviceWorkerRegistration) {
+            return serviceWorkerRegistration.pushManager.subscribe({
+                userVisibleOnly: true,
+                applicationServerKey: urlBase64ToUint8Array(publicKey)
             });
+        }).then(function (subscription) {
+            let data = getDeviceData(contact, subscription);
+
+            if (contact.unique_id && contact.email !== anonymousEmail) {
+                data.contact.unique_id = contact.unique_id;
+            }
+
+            return makeRequest('subscribe', data);
+        }).catch(function (e) {
+            if (Notification.permission === 'denied') {
+                console.warn('Notifications are denied by the user.');
+            } else {
+                console.error('Impossible to subscribe to push notifications', e);
+            }
+        });
     };
 
     this.unsubscribe = function () {
-        navigator.serviceWorker.ready
-            .then(function (serviceWorkerRegistration) {
-                return serviceWorkerRegistration.pushManager.getSubscription();
-            })
-            .then(function (subscription) {
-                if (!subscription) {
-                    return;
-                }
+        navigator.serviceWorker.ready.then(function (serviceWorkerRegistration) {
+            return serviceWorkerRegistration.pushManager.getSubscription();
+        }).then(function (subscription) {
+            if (!subscription) {
+                return;
+            }
 
-                let data = {
-                    'subscription_id': window.localStorage.getItem('subscription_id'),
-                    'device_id': window.localStorage.getItem('device_id'),
-                    'datetime': new Date().toISOString(),
-                    'metadata': {},
-                };
+            let data = {
+                'subscription_id': window.localStorage.getItem('subscription_id'),
+                'device_id': window.localStorage.getItem('device_id'),
+                'datetime': new Date().toISOString(),
+                'metadata': {},
+            };
 
-                makeRequest('unsubscribe', data);
+            makeRequest('unsubscribe', data);
 
-                return subscription.unsubscribe();
-            });
+            return subscription.unsubscribe();
+        });
     };
 
     /*****************************
@@ -225,4 +200,28 @@ window.EverlyticPushSDK = new function () {
             );
         });
     }
+
+    function getDeviceData(contact, subscription) {
+        return {
+            'push_project_uuid': projectUuid,
+            'contact': {
+                "email": contact.email,
+                "push_token": JSON.stringify(subscription)
+            },
+            'platform': {
+                'type': navigator.appName,
+                'version': navigator.appVersion
+            },
+            'device': {
+                'id': window.localStorage.getItem('device_id'),
+                'manufacturer': navigator.appCodeName,
+                'model': navigator.userAgent,
+                'type': 'N/A'
+            },
+            'datetime': new Date().toISOString(),
+            'metadata': {},
+        };
+    }
 };
+
+
