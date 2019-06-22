@@ -4,8 +4,13 @@ window.EverlyticPushSDK = new function () {
     let projectUuid = '';
     let publicKey = '';
 
+    let that = this;
+
     this.init = function (config) {
-        initialize(config);
+        if (!config.hash) {
+            throw 'config.hash is required';
+        }
+        initializeServiceWorker(config);
     };
 
     this.subscribeAnonymous = function() {
@@ -29,7 +34,6 @@ window.EverlyticPushSDK = new function () {
                 }
             )
             .then(function (subscription) {
-                console.log(subscription);
                 let data = {
                     'push_project_uuid': projectUuid,
                     'contact': {
@@ -92,7 +96,7 @@ window.EverlyticPushSDK = new function () {
      ***** Private Functions *****
      *****************************/
 
-    function initialize(config) {
+    function initializeServiceWorker(config) {
         const configDecoded = atob(config.hash);
         const configArray = configDecoded.split(";");
 
@@ -129,12 +133,23 @@ window.EverlyticPushSDK = new function () {
 
         navigator.serviceWorker.register('load-worker.js').then(
             function () {
-                navigator.serviceWorker.controller.postMessage({
-                    'type': 'initialize',
-                    'projectUuid': projectUuid,
-                    'install': install
-                });
-                console.log('[SW] Service worker has been registered');
+                if (navigator.serviceWorker.controller) {
+                    const response = postMessageToServiceWorker({
+                        'type': 'initialize',
+                        'projectUuid': projectUuid,
+                        'install': install
+                    });
+                    console.log('[SW] Service worker has been registered');
+
+                    if (config.autoSubscribe) {
+                        response.then(function(){
+                            that.subscribeAnonymous();
+                        });
+                    }
+                } else {
+                    window.location.reload(); // TODO Fix this.
+                    console.log('[SW] Service worker has been registered, but not loaded. Reloading page.');
+                }
             },
             function (e) {
                 console.error('[SW] Service worker registration failed', e);
@@ -185,6 +200,15 @@ window.EverlyticPushSDK = new function () {
     }
 
     function makeRequest(type, data = {}) {
+        return postMessageToServiceWorker({
+            "type": type,
+            'projectUuid': projectUuid,
+            "install": install,
+            "data": data,
+        });
+    }
+
+    function postMessageToServiceWorker(data) {
         return new Promise(function(resolve, reject) {
             let channel = new MessageChannel();
             channel.port1.onmessage = function (event) {
@@ -196,12 +220,7 @@ window.EverlyticPushSDK = new function () {
             };
 
             navigator.serviceWorker.controller.postMessage(
-                {
-                    "type": type,
-                    'projectUuid': projectUuid,
-                    "install": install,
-                    "data": data,
-                },
+                data,
                 [channel.port2]
             );
         });

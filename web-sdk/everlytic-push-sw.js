@@ -25,7 +25,7 @@ self.addEventListener('push', function (event) {
     }
 });
 
-self.addEventListener('notificationclick', function(event){
+self.addEventListener('notificationclick', function(event) {
     talkToEverlytic('clicks', {
         'message_id': event.notification.data.message_id,
         'subscription_id': event.notification.data.subscription_id,
@@ -34,7 +34,7 @@ self.addEventListener('notificationclick', function(event){
     });
 });
 
-self.addEventListener('notificationclose', function(event){
+self.addEventListener('notificationclose', function(event) {
     talkToEverlytic('dismissals', {
         'message_id': event.notification.data.message_id,
         'subscription_id': event.notification.data.subscription_id,
@@ -43,10 +43,14 @@ self.addEventListener('notificationclose', function(event){
     });
 });
 
-self.addEventListener('message', function(event){
+self.addEventListener('message', function(event) {
     if (event.data.type === 'initialize') {
-        saveSetting('projectUuid', event.data.projectUuid);
-        saveSetting('install', event.data.install);
+        saveSettings({
+            'projectUuid': event.data.projectUuid,
+            'install': event.data.install
+        }, function() {
+            event.ports[0].postMessage({'status':'success'});
+        });
     } else if (['subscribe', 'unsubscribe'].indexOf(event.data.type) !== -1) {
         talkToEverlytic(event.data.type, event.data.data, function(result){
             event.ports[0].postMessage(result);
@@ -117,15 +121,20 @@ function getStoreIndexedDB (openDB) {
     return db;
 }
 
-function saveSetting (name, data) {
+function saveSettings (settings, successCallback) {
     let openDB = openIndexedDB();
 
     openDB.onsuccess = function() {
         let db = getStoreIndexedDB(openDB);
-        db.store.put({id: name, data: data});
-    };
+        for (let key in settings) {
+            if (!settings.hasOwnProperty(key)) continue;
+            let value = settings[key];
 
-    return true;
+            db.store.put({id: key, data: value});
+        }
+
+        successCallback();
+    };
 }
 
 function loadSettings (callback) {
@@ -146,3 +155,16 @@ function loadSettings (callback) {
 
     return true;
 }
+
+
+/************************
+ ** Other random stuff **
+ ************************/
+
+self.addEventListener('install', function(event) {
+    event.waitUntil(self.skipWaiting()); // Activate worker immediately
+});
+
+self.addEventListener('activate', function(event) {
+    event.waitUntil(self.clients.claim()); // Become available to all pages
+});

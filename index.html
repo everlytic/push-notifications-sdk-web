@@ -23,11 +23,6 @@
         <button id="push-unsubscription-button">Disable Push notifications</button>
     </div>
     <br/>
-    <div>
-        <button id="push-delivery-button">Delivery Event</button>
-        <button id="push-click-button">Click Event</button>
-        <button id="push-dismiss-button">Dismiss Event</button>
-    </div>
 </center>
 </body>
 
@@ -38,14 +33,7 @@ window.addEventListener('load', function() {
 
     SDK.init({
         hash:"cD1lMjliNjNmNC05M2JlLTQxY2ItYmQ3NC0wM2Q0MDUyNzMzOWU7aT1odHRwOi8vbG9jYWwuZXZlcmx5dGljLmNvbTtwdWJrPUJDdnFhcm9pZHAzRnJvOGd6TGxFeXF5aHFmc2JqZVhXWkI2Mm9LQlRFZDBlNXVNWkNrWFllTGVqNXBKeWtkQU81ck9ZM1Y4Zk1tWXNNQzVFLXg0NEtjTQ==",
-    });
-
-    document.querySelector('#push-anonymous-subscription-button').addEventListener('click', function () {
-        SDK.subscribeAnonymous().then(function(result){
-            console.log(result);
-        }).catch(function(err){
-            console.log('error');
-        });
+        // autoSubscribe: true,
     });
 });
 </script>
