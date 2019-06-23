@@ -36,7 +36,18 @@ window.EverlyticPushSDK = new function () {
                 data.contact.unique_id = contact.unique_id;
             }
 
-            return makeRequest('subscribe', data);
+            return makeRequest('subscribe', data).then(function (response) {
+                return new Promise(function(resolve, reject) {
+                    if (response.data && response.data.subscription.pns_id) {
+                        window.localStorage.setItem("subscription_id", response.data.subscription.pns_id);
+                        resolve(event.data);
+                    } else {
+                        unsubscribeFromServiceWorker().then(function(){
+                            reject('Could not subscribe to Everlytic');
+                        });
+                    }
+                });
+            });
         }).catch(function (e) {
             if (Notification.permission === 'denied') {
                 console.warn('Notifications are denied by the user.');
@@ -47,13 +58,7 @@ window.EverlyticPushSDK = new function () {
     };
 
     this.unsubscribe = function () {
-        navigator.serviceWorker.ready.then(function (serviceWorkerRegistration) {
-            return serviceWorkerRegistration.pushManager.getSubscription();
-        }).then(function (subscription) {
-            if (!subscription) {
-                return;
-            }
-
+        unsubscribeFromServiceWorker().then(function() {
             let data = {
                 'subscription_id': window.localStorage.getItem('subscription_id'),
                 'device_id': window.localStorage.getItem('device_id'),
@@ -62,14 +67,23 @@ window.EverlyticPushSDK = new function () {
             };
 
             makeRequest('unsubscribe', data);
-
-            return subscription.unsubscribe();
         });
     };
 
     /*****************************
      ***** Private Functions *****
      *****************************/
+    function unsubscribeFromServiceWorker () {
+        navigator.serviceWorker.ready.then(function (serviceWorkerRegistration) {
+            return serviceWorkerRegistration.pushManager.getSubscription();
+        }).then(function (subscription) {
+            if (!subscription) {
+                return;
+            }
+
+            return subscription.unsubscribe();
+        });
+    }
 
     function initializeServiceWorker(config) {
         const configDecoded = atob(config.hash);
