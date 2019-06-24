@@ -6,14 +6,10 @@
     "type": "git",
     "url": "git+https://github.com/everlytic/push-notifications-sdk-web.git"
   },
-  "keywords": [
-    "SDK"
-  ],
-  "author": "Everlytic",
-  "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/everlytic/push-notifications-sdk-web/issues"
+  "scripts": {
+    "build": "webpack --config webpack.config.js"
   },
+  "author": "Everlytic",
   "homepage": "https://github.com/everlytic/push-notifications-sdk-web#readme",
   "devDependencies": {
     "babel-minify-webpack-plugin": "^0.3.1",

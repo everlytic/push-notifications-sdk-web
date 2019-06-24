@@ -34,4 +34,12 @@ jobs:
                   key: v1-dependencies-{{ checksum "package.json" }}
 
             # run webpack!
-            - run: webpack
+            - run: npm run-script build
+
+            - run:
+                  name: Install awscli
+                  command: sudo pip install awscli
+#
+#            - run:
+#                  name: Deploy to S3
+#                  command: aws s3 sync push-notifications-sdk-web/dist/ s3://push-notifications-sdk-web/dist/ --delete
