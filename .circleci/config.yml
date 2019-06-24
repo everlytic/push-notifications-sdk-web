@@ -42,4 +42,4 @@ jobs:
 
             - run:
                   name: Deploy to S3
-                  command: aws s3 sync push-notifications-sdk-web/dist/ s3://push-notifications-sdk-web/dist/ --delete
+                  command: aws s3 sync dist/ s3://push-notifications-sdk-web/dist/ --delete
