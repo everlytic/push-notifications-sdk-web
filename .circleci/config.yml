@@ -46,4 +46,4 @@ jobs:
 
             - run:
                   name: Deploy min files to S3
-                  command: aws s3 sync dist/ s3://everlytic-push-notifications-sdk-web --delete
+                  command: aws s3 sync dist/ s3://everlytic-push-notifications-sdk-web
