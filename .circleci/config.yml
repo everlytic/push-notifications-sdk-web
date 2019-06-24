@@ -34,11 +34,7 @@ jobs:
 
             - run:
                   name: Deploy src files to S3
-                  command: aws s3 sync src/ s3://dev/everlytic-push-notifications-sdk-web --delete
-
-            - run:
-                  name: Deploy min files to S3
-                  command: aws s3 sync dist/ s3://dev/everlytic-push-notifications-sdk-web
+                  command: aws s3 sync src/ s3://everlytic-push-notifications-sdk-web
     deploy:
         docker:
             - image: circleci/node:7.10
@@ -46,12 +42,8 @@ jobs:
 
         steps:
             - run:
-                  name: Deploy src files to S3
-                  command: aws s3 sync src/ s3://prod/everlytic-push-notifications-sdk-web --delete
-
-            - run:
                   name: Deploy min files to S3
-                  command: aws s3 sync dist/ s3://prod/everlytic-push-notifications-sdk-web
+                  command: aws s3 sync dist/ s3://everlytic-push-notifications-sdk-web
 workflows:
     version: 2
     build-deploy:
