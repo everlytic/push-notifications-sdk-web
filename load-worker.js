@@ -1,2 +1,1 @@
-// This is an example file. Don't use this file on your website. Use the file given to you when you set up your project.
-importScripts('http://localhost:8000/src/everlytic-push-sw.js');
+importScripts('http://d1vjq17neg4i9o.cloudfront.net/everlytic-push-sw.min.js');
