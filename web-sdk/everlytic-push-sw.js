@@ -80,6 +80,8 @@ function talkToEverlytic(type, data, successCallback) {
                 successCallback(jsonResult);
             });
         }
+    }).catch(function(err) {
+        console.error(err);
     });
 
 }
