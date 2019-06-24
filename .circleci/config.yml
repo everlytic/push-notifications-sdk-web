@@ -41,5 +41,9 @@ jobs:
                   command: sudo apt-get install awscli
 
             - run:
-                  name: Deploy to S3
-                  command: aws s3 sync dist/ s3://push-notifications-sdk-web/dist/ --delete
+                  name: Deploy src files to S3
+                  command: aws s3 sync src/ s3://everlytic-push-notifications-sdk-web --delete
+
+            - run:
+                  name: Deploy min files to S3
+                  command: aws s3 sync dist/ s3://everlytic-push-notifications-sdk-web --delete
