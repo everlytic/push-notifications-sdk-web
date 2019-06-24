@@ -1,3 +1,4 @@
+<!-- This is an example website that implements the SDK -->
 <html>
 <body background="https://lh3.googleusercontent.com/proxy/Azzno_p5uj0iOD1CuQxNUO0Q2f7KS963DQK1EiA7Pp-w6lhAeJmdJhoLMkJB-B6zq-bpXSUNzC6MoXV_CtAJlB73SF-LOAx3FnqLRg=w3840-h2160-p-k-no-nd-mv">
 <center>
@@ -25,18 +26,18 @@
     <br/>
 </center>
 </body>
-
-<script type="text/javascript" src="http://localhost:8000/web-sdk/everlytic-push-sdk.js" async=""></script>
+<!-- Example script, don't copy this. Use the script given to you on setup. -->
+<script type="text/javascript" src="http://localhost:8000/src/everlytic-push-sdk.js" async=""></script>
 <script>
+// Wait for the content to load fully before initializing the SDK
 window.addEventListener('load', function() {
-    let SDK = window.EverlyticPushSDK;
 
+    // Initialize the SDK with autoSubscribe enabled
+    let SDK = window.EverlyticPushSDK;
     SDK.init({
         hash:"cD1lMjliNjNmNC05M2JlLTQxY2ItYmQ3NC0wM2Q0MDUyNzMzOWU7aT1odHRwOi8vbG9jYWwuZXZlcmx5dGljLmNvbTtwdWJrPUJDdnFhcm9pZHAzRnJvOGd6TGxFeXF5aHFmc2JqZVhXWkI2Mm9LQlRFZDBlNXVNWkNrWFllTGVqNXBKeWtkQU81ck9ZM1Y4Zk1tWXNNQzVFLXg0NEtjTQ==",
         autoSubscribe: true,
     });
 });
 </script>
-<!--<script type="text/javascript" src="example-app.js"></script>`-->
-
 </html>
