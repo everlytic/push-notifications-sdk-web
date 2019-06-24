@@ -58,7 +58,7 @@ window.EverlyticPushSDK = new function () {
     };
 
     this.unsubscribe = function () {
-        unsubscribeFromServiceWorker().then(function() {
+        return unsubscribeFromServiceWorker().then(function() {
             let data = {
                 'subscription_id': window.localStorage.getItem('subscription_id'),
                 'device_id': window.localStorage.getItem('device_id'),
@@ -66,7 +66,7 @@ window.EverlyticPushSDK = new function () {
                 'metadata': {},
             };
 
-            makeRequest('unsubscribe', data);
+            return makeRequest('unsubscribe', data);
         });
     };
 
