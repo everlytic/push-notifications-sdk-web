@@ -4,13 +4,28 @@
 #
 version: 2
 jobs:
-    build:
+    deploy-staging:
         docker:
             - image: circleci/node:7.10
         working_directory: ~/src
 
         steps:
             - checkout
+
+            # Download and cache dependencies
+            - restore_cache:
+                  keys:
+                      - v1-dependencies-{{ checksum "package.json" }}
+                      # fallback to using the latest cache if no exact match is found
+                      - v1-dependencies-
+
+            - run: npm install
+
+            - save_cache:
+                  paths:
+                      - node_modules
+                  key: v1-dependencies-{{ checksum "package.json" }}
+
             - run:
                   name: Install awscli
                   command: sudo apt-get install awscli
@@ -18,7 +33,7 @@ jobs:
             - run:
                   name: Deploy src files to S3
                   command: aws s3 sync src/ s3://everlytic-push-notifications-sdk-web
-    deploy:
+    deploy-master:
         docker:
             - image: circleci/node:7.10
         working_directory: ~/src
@@ -51,10 +66,17 @@ jobs:
                   command: aws s3 sync dist/ s3://everlytic-push-notifications-sdk-web
 workflows:
     version: 2
-    build-deploy:
+    build-deploy-staging:
         jobs:
-            - build
-            - deploy:
+            - deploy-staging:
+                  requires:
+                      - build
+                  filters:
+                      branches:
+                          only: staging
+    build-deploy-master:
+        jobs:
+            - deploy-master:
                   requires:
                       - build
                   filters:
