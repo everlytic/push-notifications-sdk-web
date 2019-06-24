@@ -39,7 +39,7 @@ jobs:
             - run:
                   name: Install awscli
                   command: sudo apt-get install awscli
-#
-#            - run:
-#                  name: Deploy to S3
-#                  command: aws s3 sync push-notifications-sdk-web/dist/ s3://push-notifications-sdk-web/dist/ --delete
+
+            - run:
+                  name: Deploy to S3
+                  command: aws s3 sync push-notifications-sdk-web/dist/ s3://push-notifications-sdk-web/dist/ --delete
