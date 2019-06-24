@@ -1,7 +1,5 @@
 # Everlytic Push Web SDK [![CircleCI](https://circleci.com/gh/everlytic/push-notifications-sdk-android/tree/master.svg?style=svg)](https://circleci.com/gh/everlytic/push-notifications-sdk-android/tree/master)
 This is the Web version of Everlytic's Push Notification SDK. It enables your website to serve Everlytic's Push Notifications to your user base. 
-- [SDK Reference](./quick_reference.html)
-- [Everlytic Push List Setup](./list_setup.html)
 
 ## Getting Started
 These instructions will get you a copy of the project up and running on your local machine for development and testing purposes. See deployment for notes on how to deploy the project on a live system.
@@ -34,7 +32,7 @@ To ensure that you have added the file correctly, you should be able to go to th
 ``` 
 The options object that you need to provide to the `init` has the following fields:
 
-- `hash` You will get this hash from Everlytic.
+- `hash` You will get this hash from Everlytic _(See next section)_.
 - `autoSubscribe` Set this option if you would like your website to automatically subscribe people to Push Notifications (You won't need to call the SDK's `subscribe` method manually). _Note that this will only work for Anonymous Subscribes._   
 
 ## Getting a hash from Everlytic
@@ -58,13 +56,18 @@ There are three main methods that you can call on the Everlytic SDK. They all re
     ``` 
     Typically the email address you supply would come from the logged in user to your website. If you don't have access to the user's email address, we suggest you use the `subscribeAnonymous` method instead _(See below)_.
     
+    -
+    
 - `subscribeAnonymous()` This method you can either call manually, or it will get called automatically if you added the `autoSubscribe` option in the SDK `init` method.
     ```javascript
     //... This code comes after the SDK init method that did not supply the autoSubscribe option
     SDK.subscribeAnonymous().then(function(result){
         console.log(result.subscription) // Do something with the subscription object.
     });
-    ``` 
+    ```
+    
+    -
+     
 - `unsubscribe()` This method should be called when the user no longer wants to receive Push Notifications. We recommend that you add a button somewhere on your website that allows the user to do so. 
     ```javascript
     //... This code comes after the SDK init method
@@ -74,6 +77,8 @@ There are three main methods that you can call on the Everlytic SDK. They all re
         });
     });
     ``` 
+    
+    -
 
 ## License
 This project is licensed under the Mozilla Public License Version 2.0 - see the [LICENSE](LICENSE) file for details
