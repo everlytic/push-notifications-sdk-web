@@ -57,10 +57,12 @@ workflows:
             - deploy-staging:
                   filters:
                       branches:
-                          only: staging
+                          only: master
     build-deploy-master:
         jobs:
             - deploy-master:
-                  filters:
-                      branches:
-                          only: master
+                filters:
+                    tags:
+                        only: /^v.*/
+                    branches:
+                        ignore: /.*/
