@@ -74,11 +74,11 @@ window.EverlyticPushSDK = new function () {
      ***** Private Functions *****
      *****************************/
     function unsubscribeFromServiceWorker () {
-        navigator.serviceWorker.ready.then(function (serviceWorkerRegistration) {
+        return navigator.serviceWorker.ready.then(function (serviceWorkerRegistration) {
             return serviceWorkerRegistration.pushManager.getSubscription();
         }).then(function (subscription) {
             if (!subscription) {
-                return;
+                return Promise.resolve();
             }
 
             return subscription.unsubscribe();
@@ -237,5 +237,3 @@ window.EverlyticPushSDK = new function () {
         };
     }
 };
-
-
