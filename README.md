@@ -43,26 +43,30 @@ Everlytic needs to be set up to have a special list to send Push Notifications t
 
 ## General SDK Usage
 There are three main methods that you can call on the Everlytic SDK. They all return a promise that contains a result:
-- `subscribe(userObject)` This method you can call manually to subscribe a contact to Everlytic using an email address to identify the contact. If the contact doesn't exist in Everlytic, it will create one.
+- `subscribe(contactObject [, resetPreflightCheck])` This method you can call manually to subscribe a contact to Everlytic using an email address to identify the contact. If the contact doesn't exist in Everlytic, it will create one.
 
     See the following example:
     ```javascript
     //... This code comes after the SDK init method
     SDK.subscribe({
         'email' : 'example@everlytic.com'
-    }).then(function(result){
+    }).then(function(result) {
         console.log(result.subscription) // Do something with the subscription object.
+    }).catch(function(error){
+        console.error(error); // Something went wrong.      
     });
     ``` 
     Typically the email address you supply would come from the logged in user to your website. If you don't have access to the user's email address, we suggest you use the `subscribeAnonymous` method instead _(See below)_.
     
     -
     
-- `subscribeAnonymous()` This method you can either call manually, or it will get called automatically if you added the `autoSubscribe` option in the SDK `init` method.
+- `subscribeAnonymous([resetPreflightCheck])` This method you can either call manually, or it will get called automatically if you added the `autoSubscribe` option in the SDK `init` method.
     ```javascript
     //... This code comes after the SDK init method that did not supply the autoSubscribe option
-    SDK.subscribeAnonymous().then(function(result){
+    SDK.subscribeAnonymous().then(function(result) {
         console.log(result.subscription) // Do something with the subscription object.
+    }).catch(function(error){
+        console.error(error); // Something went wrong.      
     });
     ```
     
@@ -72,9 +76,11 @@ There are three main methods that you can call on the Everlytic SDK. They all re
     ```javascript
     //... This code comes after the SDK init method
     document.querySelector('#push-unsubscribe-button').addEventListener('click', function () {
-        SDK.unsubscribe().then(function(result){
+        SDK.unsubscribe().then(function(result) {
             console.log(result); // Do something with the result.
         });
+    }).catch(function(error) {
+        console.error(error); // Something went wrong.      
     });
     ``` 
     

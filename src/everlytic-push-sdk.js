@@ -10,16 +10,25 @@ window.EverlyticPushSDK = new function () {
         if (!config.hash) {
             throw 'config.hash is required';
         }
+
+        if (window.localStorage.getItem('everlytic.permission_granted') === 'no') {
+            console.warn('User denied Preflight permission check. You may attempt to reset this by passing a parameter in the subscribe method.');
+        }
+
         initializeServiceWorker(config);
     };
 
-    this.subscribeAnonymous = function() {
-        return this.subscribe({"email": anonymousEmail})
+    this.subscribeAnonymous = function(resetPreflightCheck = false) {
+        return this.subscribe({"email": anonymousEmail}, resetPreflightCheck);
     };
 
-    this.subscribe = function (contact) {
+    this.subscribe = function (contact, resetPreflightCheck = false) {
         if (!contact.email) {
             throw 'contact.email is required.';
+        }
+
+        if (resetPreflightCheck) {
+            window.localStorage.removeItem('everlytic.permission_granted');
         }
 
         return checkNotificationPermission().then(function () {
@@ -39,7 +48,7 @@ window.EverlyticPushSDK = new function () {
             return makeRequest('subscribe', data).then(function (response) {
                 return new Promise(function(resolve, reject) {
                     if (response.data && response.data.subscription.pns_id) {
-                        window.localStorage.setItem("subscription_id", response.data.subscription.pns_id);
+                        window.localStorage.setItem("everlytic.subscription_id", response.data.subscription.pns_id);
                         resolve(event.data);
                     } else {
                         unsubscribeFromServiceWorker().then(function(){
@@ -61,8 +70,8 @@ window.EverlyticPushSDK = new function () {
     this.unsubscribe = function () {
         return unsubscribeFromServiceWorker().then(function() {
             let data = {
-                'subscription_id': window.localStorage.getItem('subscription_id'),
-                'device_id': window.localStorage.getItem('device_id'),
+                'subscription_id': window.localStorage.getItem('everlytic.subscription_id'),
+                'device_id': window.localStorage.getItem('everlytic.device_id'),
                 'datetime': new Date().toISOString(),
                 'metadata': {},
             };
@@ -117,8 +126,8 @@ window.EverlyticPushSDK = new function () {
             throw 'Notifications are denied by the user';
         }
 
-        if (!window.localStorage.getItem('device_id')) {
-            window.localStorage.setItem('device_id', uuidv4());
+        if (!window.localStorage.getItem('everlytic.device_id')) {
+            window.localStorage.setItem('everlytic.device_id', uuidv4());
         }
 
         navigator.serviceWorker.register('load-worker.js').then(
@@ -170,27 +179,45 @@ window.EverlyticPushSDK = new function () {
     function checkNotificationPermission() {
         return new Promise(function (resolve, reject) {
             if (Notification.permission === 'denied') {
+                setLSPermissionDenied();
                 return reject(new Error('Push messages are blocked.'));
             }
 
             if (Notification.permission === 'granted') {
+                setLSPermissionGranted();
                 return resolve();
             }
 
-            if (confirm("We would like to send you Push Notifications")) {
+            if (
+                window.localStorage.getItem('everlytic.permission_granted') !== 'no'
+                && confirm("We would like to send you Push Notifications")
+            ) {
                 if (Notification.permission === 'default') {
                     return Notification.requestPermission().then(function (result) {
                         if (result !== 'granted') {
+                            setLSPermissionDenied();
                             reject(new Error('Bad permission result'));
                         }
 
+                        setLSPermissionGranted();
                         resolve();
                     });
                 }
             } else {
+                setLSPermissionDenied();
                 return reject();
             }
         });
+    }
+
+    function setLSPermissionDenied()
+    {
+        window.localStorage.setItem('everlytic.permission_granted', 'no');
+    }
+
+    function setLSPermissionGranted()
+    {
+        window.localStorage.setItem('everlytic.permission_granted', 'yes');
     }
 
     function makeRequest(type, data = {}) {
@@ -232,7 +259,7 @@ window.EverlyticPushSDK = new function () {
                 'version': navigator.appVersion
             },
             'device': {
-                'id': window.localStorage.getItem('device_id'),
+                'id': window.localStorage.getItem('everlytic.device_id'),
                 'manufacturer': navigator.appCodeName,
                 'model': navigator.userAgent,
                 'type': 'N/A'
