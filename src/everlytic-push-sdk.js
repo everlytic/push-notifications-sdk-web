@@ -54,6 +54,7 @@ window.EverlyticPushSDK = new function () {
             } else {
                 console.error('Impossible to subscribe to push notifications', e);
             }
+            throw e;
         });
     };
 
@@ -176,14 +177,18 @@ window.EverlyticPushSDK = new function () {
                 return resolve();
             }
 
-            if (Notification.permission === 'default') {
-                return Notification.requestPermission().then(function (result) {
-                    if (result !== 'granted') {
-                        reject(new Error('Bad permission result'));
-                    }
+            if (confirm("We would like to send you Push Notifications")) {
+                if (Notification.permission === 'default') {
+                    return Notification.requestPermission().then(function (result) {
+                        if (result !== 'granted') {
+                            reject(new Error('Bad permission result'));
+                        }
 
-                    resolve();
-                });
+                        resolve();
+                    });
+                }
+            } else {
+                return reject();
             }
         });
     }
