@@ -22,7 +22,7 @@ window.EverlyticPushSDK = new function () {
     };
 
     this.subscribeAnonymous = function () {
-        return this.subscribe({"email": anonymousEmail});
+        return subscribeContact({"email": anonymousEmail});
     };
 
     this.subscribeWithAskEmailPrompt = function() {
