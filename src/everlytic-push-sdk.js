@@ -1,8 +1,11 @@
 window.EverlyticPushSDK = new function () {
     const anonymousEmail = 'anonymous@everlytic.com';
+
     let install = '';
     let projectUuid = '';
     let publicKey = '';
+
+    let debug = false;
 
     let that = this;
 
@@ -11,8 +14,8 @@ window.EverlyticPushSDK = new function () {
             throw 'config.hash is required';
         }
 
-        if (window.localStorage.getItem('everlytic.permission_granted') === 'no') {
-            console.warn('User denied Preflight permission check. You may attempt to reset this by passing a parameter in the subscribe method.');
+        if (config.debug) {
+            debug = true;
         }
 
         initializeServiceWorker(config);
@@ -22,12 +25,12 @@ window.EverlyticPushSDK = new function () {
         return this.subscribe({"email": anonymousEmail});
     };
 
-    this.subscribeWithAskPrompt = function() {
-        const email = prompt("Please enter your email address so we can send you Push Notifications", "foo@bar.com");
-        if (email == null || email == "") {
-            return this.subscribe({
-                "email": email
-            });
+    this.subscribeWithAskEmailPrompt = function() {
+        const email = prompt("Please enter your Email Address so we can send you Push Notifications");
+        if (email !== null && email !== "") {
+            return subscribeContact({"email": email}, true);
+        } else {
+            return Promise.reject();
         }
     };
 
@@ -36,7 +39,33 @@ window.EverlyticPushSDK = new function () {
             throw 'contact.email is required.';
         }
 
-        return checkNotificationPermission().then(function () {
+        return subscribeContact(contact);
+    };
+
+    this.unsubscribe = function () {
+        return unsubscribeFromServiceWorker().then(function() {
+            let data = {
+                'subscription_id': window.localStorage.getItem('everlytic.subscription_id'),
+                'device_id': window.localStorage.getItem('everlytic.device_id'),
+                'datetime': new Date().toISOString(),
+                'metadata': {},
+            };
+
+            return makeRequest('unsubscribe', data);
+        });
+    };
+
+    this.resetPreflightCheck = function() {
+        window.localStorage.removeItem('everlytic.permission_granted');
+    };
+
+
+    /*****************************
+     ***** Private Functions *****
+     *****************************/
+
+    function subscribeContact (contact, bypassPreflight = false) {
+        return checkNotificationPermission(bypassPreflight).then(function () {
             return navigator.serviceWorker.ready;
         }).then(function (serviceWorkerRegistration) {
             return serviceWorkerRegistration.pushManager.subscribe({
@@ -64,34 +93,14 @@ window.EverlyticPushSDK = new function () {
             });
         }).catch(function (e) {
             if (Notification.permission === 'denied') {
-                console.warn('Notifications are denied by the user.');
+                outputDebug('Notifications are denied by the user.');
             } else {
                 console.error('Impossible to subscribe to push notifications', e);
             }
             throw e;
         });
-    };
+    }
 
-    this.unsubscribe = function () {
-        return unsubscribeFromServiceWorker().then(function() {
-            let data = {
-                'subscription_id': window.localStorage.getItem('everlytic.subscription_id'),
-                'device_id': window.localStorage.getItem('everlytic.device_id'),
-                'datetime': new Date().toISOString(),
-                'metadata': {},
-            };
-
-            return makeRequest('unsubscribe', data);
-        });
-    };
-
-    this.resetPreflightCheck = function() {
-        window.localStorage.removeItem('everlytic.permission_granted');
-    };
-
-    /*****************************
-     ***** Private Functions *****
-     *****************************/
     function unsubscribeFromServiceWorker () {
         return navigator.serviceWorker.ready.then(function (serviceWorkerRegistration) {
             return serviceWorkerRegistration.pushManager.getSubscription();
@@ -147,7 +156,7 @@ window.EverlyticPushSDK = new function () {
                         'projectUuid': projectUuid,
                         'install': install
                     });
-                    console.log('[SW] Service worker has been registered');
+                    outputDebug('[SW] Service worker has been registered');
 
                     if (config.autoSubscribe) {
                         response.then(function(){
@@ -156,7 +165,7 @@ window.EverlyticPushSDK = new function () {
                     }
                 } else {
                     window.location.reload(); // TODO Fix this.
-                    console.log('[SW] Service worker has been registered, but not loaded. Reloading page.');
+                    outputDebug('[SW] Service worker has been registered, but not loaded. Reloading page.');
                 }
             },
             function (e) {
@@ -185,7 +194,7 @@ window.EverlyticPushSDK = new function () {
         return outputArray;
     }
 
-    function checkNotificationPermission() {
+    function checkNotificationPermission(bypassPreflight = false) {
         return new Promise(function (resolve, reject) {
             if (Notification.permission === 'denied') {
                 setLSPermissionDenied();
@@ -198,8 +207,8 @@ window.EverlyticPushSDK = new function () {
             }
 
             if (
-                window.localStorage.getItem('everlytic.permission_granted') !== 'no'
-                && confirm("We would like to send you Push Notifications")
+                (window.localStorage.getItem('everlytic.permission_granted') !== 'no' || debug)
+                && (bypassPreflight || confirm("We would like to send you Push Notifications"))
             ) {
                 if (Notification.permission === 'default') {
                     return Notification.requestPermission().then(function (result) {
@@ -276,5 +285,12 @@ window.EverlyticPushSDK = new function () {
             'datetime': new Date().toISOString(),
             'metadata': {},
         };
+    }
+
+    function outputDebug(string)
+    {
+        if (debug) {
+            console.warn(string);
+        }
     }
 };

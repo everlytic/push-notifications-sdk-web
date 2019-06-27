@@ -51,20 +51,32 @@ There are three main methods that you can call on the Everlytic SDK. They all re
     SDK.subscribe({
         'email' : 'example@everlytic.com'
     }).then(function(result) {
-        console.log(result.subscription) // Do something with the subscription object.
+        console.log(result) // Do something with the result.
     }).catch(function(error){
         console.error(error); // Something went wrong.      
     });
     ``` 
-    Typically the email address you supply would come from the logged in user to your website. If you don't have access to the user's email address, we suggest you use the `subscribeAnonymous` method instead _(See below)_.
+    Typically the email address you supply would come from the logged in user to your website. If you don't have access to the user's email address, we suggest you use the `subscribeAnonymous` or `subscribeWithAskEmailPrompt` methods instead _(See below)_.
     
     -
     
+- `subscribeWithAskEmailPrompt()` This method is very similar to the first `subscribe` method, but instead of you passing a contact object with the email address, a prompt will ask the contact to enter their email address to subscribe with. Useful if you don't have access to the contact's email details, but don't want to send anonymously.
+    ```javascript
+    //... This code comes after the SDK init method that did not supply the autoSubscribe option
+    SDK.subscribeWithAskEmailPrompt().then(function(result) {
+        console.log(result) // Do something with the result.
+    }).catch(function(){
+        console.error('Something bad happened');      
+    });
+    ```
+
+    -
+        
 - `subscribeAnonymous()` This method you can either call manually, or it will get called automatically if you added the `autoSubscribe` option in the SDK `init` method.
     ```javascript
     //... This code comes after the SDK init method that did not supply the autoSubscribe option
     SDK.subscribeAnonymous().then(function(result) {
-        console.log(result.subscription) // Do something with the subscription object.
+        console.log(result) // Do something with the result.
     }).catch(function(error){
         console.error(error); // Something went wrong.      
     });
