@@ -18,17 +18,22 @@ window.EverlyticPushSDK = new function () {
         initializeServiceWorker(config);
     };
 
-    this.subscribeAnonymous = function(resetPreflightCheck = false) {
-        return this.subscribe({"email": anonymousEmail}, resetPreflightCheck);
+    this.subscribeAnonymous = function () {
+        return this.subscribe({"email": anonymousEmail});
     };
 
-    this.subscribe = function (contact, resetPreflightCheck = false) {
+    this.subscribeWithAskPrompt = function() {
+        const email = prompt("Please enter your email address so we can send you Push Notifications", "foo@bar.com");
+        if (email == null || email == "") {
+            return this.subscribe({
+                "email": email
+            });
+        }
+    };
+
+    this.subscribe = function (contact) {
         if (!contact.email) {
             throw 'contact.email is required.';
-        }
-
-        if (resetPreflightCheck) {
-            window.localStorage.removeItem('everlytic.permission_granted');
         }
 
         return checkNotificationPermission().then(function () {
@@ -78,6 +83,10 @@ window.EverlyticPushSDK = new function () {
 
             return makeRequest('unsubscribe', data);
         });
+    };
+
+    this.resetPreflightCheck = function() {
+        window.localStorage.removeItem('everlytic.permission_granted');
     };
 
     /*****************************

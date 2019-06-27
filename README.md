@@ -43,7 +43,7 @@ Everlytic needs to be set up to have a special list to send Push Notifications t
 
 ## General SDK Usage
 There are three main methods that you can call on the Everlytic SDK. They all return a promise that contains a result:
-- `subscribe(contactObject [, resetPreflightCheck])` This method you can call manually to subscribe a contact to Everlytic using an email address to identify the contact. If the contact doesn't exist in Everlytic, it will create one.
+- `subscribe(contactObject)` This method you can call manually to subscribe a contact to Everlytic using an email address to identify the contact. If the contact doesn't exist in Everlytic, it will create one.
 
     See the following example:
     ```javascript
@@ -60,7 +60,7 @@ There are three main methods that you can call on the Everlytic SDK. They all re
     
     -
     
-- `subscribeAnonymous([resetPreflightCheck])` This method you can either call manually, or it will get called automatically if you added the `autoSubscribe` option in the SDK `init` method.
+- `subscribeAnonymous()` This method you can either call manually, or it will get called automatically if you added the `autoSubscribe` option in the SDK `init` method.
     ```javascript
     //... This code comes after the SDK init method that did not supply the autoSubscribe option
     SDK.subscribeAnonymous().then(function(result) {
@@ -75,10 +75,8 @@ There are three main methods that you can call on the Everlytic SDK. They all re
 - `unsubscribe()` This method should be called when the user no longer wants to receive Push Notifications. We recommend that you add a button somewhere on your website that allows the user to do so. 
     ```javascript
     //... This code comes after the SDK init method
-    document.querySelector('#push-unsubscribe-button').addEventListener('click', function () {
-        SDK.unsubscribe().then(function(result) {
-            console.log(result); // Do something with the result.
-        });
+    SDK.unsubscribe().then(function(result) {
+        console.log(result); // Do something with the result.
     }).catch(function(error) {
         console.error(error); // Something went wrong.      
     });
