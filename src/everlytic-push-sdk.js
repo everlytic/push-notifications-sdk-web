@@ -1,5 +1,8 @@
 window.EverlyticPushSDK = new function () {
     const anonymousEmail = 'anonymous@everlytic.com';
+    let preflight = {
+        "message": "We would like to send you Push Notifications",
+    };
 
     let install = '';
     let projectUuid = '';
@@ -16,6 +19,10 @@ window.EverlyticPushSDK = new function () {
 
         if (config.debug) {
             debug = true;
+        }
+
+        if (config.preflight && typeof config.preflight === 'object') {
+            preflight = Object.assign(preflight, config.preflight);
         }
 
         initializeServiceWorker(config);
@@ -63,55 +70,6 @@ window.EverlyticPushSDK = new function () {
     /*****************************
      ***** Private Functions *****
      *****************************/
-
-    function subscribeContact (contact, bypassPreflight = false) {
-        return checkNotificationPermission(bypassPreflight).then(function () {
-            return navigator.serviceWorker.ready;
-        }).then(function (serviceWorkerRegistration) {
-            return serviceWorkerRegistration.pushManager.subscribe({
-                userVisibleOnly: true,
-                applicationServerKey: urlBase64ToUint8Array(publicKey)
-            });
-        }).then(function (subscription) {
-            let data = getDeviceData(contact, subscription);
-
-            if (contact.unique_id && contact.email !== anonymousEmail) {
-                data.contact.unique_id = contact.unique_id;
-            }
-
-            return makeRequest('subscribe', data).then(function (response) {
-                return new Promise(function(resolve, reject) {
-                    if (response.data && response.data.subscription.pns_id) {
-                        window.localStorage.setItem("everlytic.subscription_id", response.data.subscription.pns_id);
-                        resolve(event.data);
-                    } else {
-                        unsubscribeFromServiceWorker().then(function(){
-                            reject('Could not subscribe to Everlytic');
-                        });
-                    }
-                });
-            });
-        }).catch(function (e) {
-            if (Notification.permission === 'denied') {
-                outputDebug('Notifications are denied by the user.');
-            } else {
-                console.error('Impossible to subscribe to push notifications', e);
-            }
-            throw e;
-        });
-    }
-
-    function unsubscribeFromServiceWorker () {
-        return navigator.serviceWorker.ready.then(function (serviceWorkerRegistration) {
-            return serviceWorkerRegistration.pushManager.getSubscription();
-        }).then(function (subscription) {
-            if (!subscription) {
-                return Promise.resolve();
-            }
-
-            return subscription.unsubscribe();
-        });
-    }
 
     function initializeServiceWorker(config) {
         const configDecoded = atob(config.hash);
@@ -181,17 +139,41 @@ window.EverlyticPushSDK = new function () {
         });
     }
 
-    function urlBase64ToUint8Array(base64String) {
-        const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
-        const base64 = (base64String + padding).replace(/\-/g, '+').replace(/_/g, '/');
+    function subscribeContact (contact, bypassPreflight = false) {
+        return checkNotificationPermission(bypassPreflight).then(function () {
+            return navigator.serviceWorker.ready;
+        }).then(function (serviceWorkerRegistration) {
+            return serviceWorkerRegistration.pushManager.subscribe({
+                userVisibleOnly: true,
+                applicationServerKey: urlBase64ToUint8Array(publicKey)
+            });
+        }).then(function (subscription) {
+            let data = getDeviceData(contact, subscription);
 
-        const rawData = window.atob(base64);
-        const outputArray = new Uint8Array(rawData.length);
+            if (contact.unique_id && contact.email !== anonymousEmail) {
+                data.contact.unique_id = contact.unique_id;
+            }
 
-        for (let i = 0; i < rawData.length; ++i) {
-            outputArray[i] = rawData.charCodeAt(i);
-        }
-        return outputArray;
+            return makeRequest('subscribe', data).then(function (response) {
+                return new Promise(function(resolve, reject) {
+                    if (response.data && response.data.subscription.pns_id) {
+                        window.localStorage.setItem("everlytic.subscription_id", response.data.subscription.pns_id);
+                        resolve(event.data);
+                    } else {
+                        unsubscribeFromServiceWorker().then(function(){
+                            reject('Could not subscribe to Everlytic');
+                        });
+                    }
+                });
+            });
+        }).catch(function (e) {
+            if (Notification.permission === 'denied') {
+                outputDebug('Notifications are denied by the user.');
+            } else {
+                console.error('Impossible to subscribe to push notifications', e);
+            }
+            throw e;
+        });
     }
 
     function checkNotificationPermission(bypassPreflight = false) {
@@ -208,7 +190,7 @@ window.EverlyticPushSDK = new function () {
 
             if (
                 (window.localStorage.getItem('everlytic.permission_granted') !== 'no' || debug)
-                && (bypassPreflight || confirm("We would like to send you Push Notifications"))
+                && (bypassPreflight || confirm(preflight.message))
             ) {
                 if (Notification.permission === 'default') {
                     return Notification.requestPermission().then(function (result) {
@@ -238,6 +220,53 @@ window.EverlyticPushSDK = new function () {
         window.localStorage.setItem('everlytic.permission_granted', 'yes');
     }
 
+    function urlBase64ToUint8Array(base64String) {
+        const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
+        const base64 = (base64String + padding).replace(/\-/g, '+').replace(/_/g, '/');
+
+        const rawData = window.atob(base64);
+        const outputArray = new Uint8Array(rawData.length);
+
+        for (let i = 0; i < rawData.length; ++i) {
+            outputArray[i] = rawData.charCodeAt(i);
+        }
+        return outputArray;
+    }
+
+    function getDeviceData(contact, subscription) {
+        return {
+            'push_project_uuid': projectUuid,
+            'contact': {
+                "email": contact.email,
+                "push_token": JSON.stringify(subscription)
+            },
+            'platform': {
+                'type': navigator.appName,
+                'version': navigator.appVersion
+            },
+            'device': {
+                'id': window.localStorage.getItem('everlytic.device_id'),
+                'manufacturer': navigator.appCodeName,
+                'model': navigator.userAgent,
+                'type': 'N/A'
+            },
+            'datetime': new Date().toISOString(),
+            'metadata': {},
+        };
+    }
+
+    function unsubscribeFromServiceWorker () {
+        return navigator.serviceWorker.ready.then(function (serviceWorkerRegistration) {
+            return serviceWorkerRegistration.pushManager.getSubscription();
+        }).then(function (subscription) {
+            if (!subscription) {
+                return Promise.resolve();
+            }
+
+            return subscription.unsubscribe();
+        });
+    }
+
     function makeRequest(type, data = {}) {
         return postMessageToServiceWorker({
             "type": type,
@@ -263,28 +292,6 @@ window.EverlyticPushSDK = new function () {
                 [channel.port2]
             );
         });
-    }
-
-    function getDeviceData(contact, subscription) {
-        return {
-            'push_project_uuid': projectUuid,
-            'contact': {
-                "email": contact.email,
-                "push_token": JSON.stringify(subscription)
-            },
-            'platform': {
-                'type': navigator.appName,
-                'version': navigator.appVersion
-            },
-            'device': {
-                'id': window.localStorage.getItem('everlytic.device_id'),
-                'manufacturer': navigator.appCodeName,
-                'model': navigator.userAgent,
-                'type': 'N/A'
-            },
-            'datetime': new Date().toISOString(),
-            'metadata': {},
-        };
     }
 
     function outputDebug(string)
