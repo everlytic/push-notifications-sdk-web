@@ -34,6 +34,7 @@ The options object that you need to provide to the `init` has the following fiel
 
 - `hash` You will get this hash from Everlytic _(See next section)_.
 - `autoSubscribe` Set this option if you would like your website to automatically subscribe people to Push Notifications (You won't need to call the SDK's `subscribe` method manually). _Note that this will only work for Anonymous Subscribes._   
+- `debug` Set this option if you would like to see debug console output and disable the pre-flight check caching. 
 
 ## Getting a hash from Everlytic
 Everlytic needs to be set up to have a special list to send Push Notifications to. We recommend using a newly created list for this, but you can also use one of the lists you have already set up.
