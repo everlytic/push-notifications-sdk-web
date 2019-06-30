@@ -11,14 +11,14 @@ These instructions will get you up and running and receiving Push Notifications 
 ### Installing
 **Step 1:** Firstly, will need to create a file called `load-worker.js` at the top level of your website that has the following code:
 ```javascript
-importScripts('http://d1vjq17neg4i9o.cloudfront.net/everlytic-push-sw-0.0.1.min.js');
+importScripts('https://d1vjq17neg4i9o.cloudfront.net/everlytic-push-sw-0.0.1.min.js');
 ``` 
 To ensure that you have added the file correctly, you should be able to go to that file via the URL, e.g: ``https://yoursite.com/load-worker.js``
 
 **Step 2:** Next, you will need to add the following code to the `<head>` of your website.
 ```html
 <head>
-    <script type="text/javascript" src="http://d1vjq17neg4i9o.cloudfront.net/everlytic-push-sdk-0.0.1.min.js" async=""></script>
+    <script type="text/javascript" src="https://d1vjq17neg4i9o.cloudfront.net/everlytic-push-sdk-0.0.1.min.js" async=""></script>
     <script>
     window.addEventListener('load', function() {
         let SDK = window.EverlyticPushSDK;

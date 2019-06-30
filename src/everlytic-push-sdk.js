@@ -3,7 +3,7 @@ window.EverlyticPushSDK = new function () {
     let preflight = {
         "title": "Push Notifications",
         "message": "We would like to send you notifications for the latest news and updates.",
-        "icon": "icon.png"
+        "icon": "https://d1vjq17neg4i9o.cloudfront.net/icon.png"
     };
 
     let install = '';
@@ -438,7 +438,7 @@ window.EverlyticPushSDK = new function () {
     } 
     
     #eve-modal-close { 
-        background: #fff url('modal-close.png') no-repeat center center; 
+        background: #fff url('https://d1vjq17neg4i9o.cloudfront.net/modal-close.png') no-repeat center center; 
         cursor: pointer; 
         display: block; 
         filter: alpha(opacity=60); 
