@@ -47,6 +47,8 @@ jobs:
 
             - run: npm run-script build
 
+            - run: cp src/*.png dist/
+
             - run:
                   name: Deploy min files to S3
                   command: aws s3 sync dist/ s3://everlytic-push-notifications-sdk-web
