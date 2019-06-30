@@ -27,6 +27,10 @@ window.EverlyticPushSDK = new function () {
             preflight = Object.assign(preflight, config.preflight);
         }
 
+        // Pre-cache icon
+        let tempImage = new Image();
+        tempImage.src = preflight.icon;
+
         initializeServiceWorker(config);
     };
 
@@ -37,22 +41,28 @@ window.EverlyticPushSDK = new function () {
     this.subscribeWithAskEmailPrompt = function(askMessage = "Please enter your email address to receive Push Notifications.") {
         const emailInputId = 'eve-modal-email';
         return new Promise(function(resolve, reject){
-            openModal(
-                askMessage,
-                `<input class="eve-modal-input" type="email" placeholder="hello@example.com" id="${emailInputId}" name="${emailInputId}" required />`,
-                preflight.icon,
-                function() {
-                    let email = document.getElementById(emailInputId).value;
-                    subscribeContact({"email": email}, true).then(function(result){
-                        resolve(result);
-                    }).catch(function(){
-                        reject();
-                    });
-                },
-                function () {
-                    reject();
-                }
-            );
+            if (debug || window.localStorage.getItem('everlytic.permission_granted') !== 'no') {
+                openModal(
+                    askMessage,
+                    `<input class="eve-modal-input" type="email" placeholder="hello@example.com" id="${emailInputId}" name="${emailInputId}" required />`,
+                    preflight.icon,
+                    function () {
+                        let email = document.getElementById(emailInputId).value;
+                        subscribeContact({"email": email}).then(function (result) {
+                            resolve(result);
+                        }).catch(function (err) {
+                            setLSPermissionDenied();
+                            reject(err);
+                        });
+                    },
+                    function () {
+                        setLSPermissionDenied();
+                        reject('User denied pre-flight');
+                    }
+                );
+            } else {
+                reject('User has denied pre-flight recently. You will need to reset this manually.');
+            }
         });
     };
 
@@ -60,8 +70,24 @@ window.EverlyticPushSDK = new function () {
         if (!contact.email) {
             throw 'contact.email is required.';
         }
+        return new Promise(function(resolve, reject) {
+            if (debug || window.localStorage.getItem('everlytic.permission_granted') !== 'no') {
+                openModal(preflight.title, preflight.message, preflight.icon, function(){
+                    subscribeContact(contact).then(function(result){
+                        resolve(result);
+                    }).catch(function(err) {
+                        setLSPermissionDenied();
+                        reject(err);
+                    });
+                }, function() {
+                    setLSPermissionDenied();
+                    reject('User denied pre-flight');
+                });
+            } else {
+                reject('User has denied pre-flight recently. You will need to reset this manually.');
+            }
+        });
 
-        return subscribeContact(contact);
     };
 
     this.unsubscribe = function () {
@@ -154,8 +180,8 @@ window.EverlyticPushSDK = new function () {
         });
     }
 
-    function subscribeContact (contact, bypassPreflight = false) {
-        return checkNotificationPermission(bypassPreflight).then(function () {
+    function subscribeContact (contact) {
+        return checkNotificationPermission().then(function () {
             return navigator.serviceWorker.ready;
         }).then(function (serviceWorkerRegistration) {
             return serviceWorkerRegistration.pushManager.subscribe({
@@ -191,7 +217,7 @@ window.EverlyticPushSDK = new function () {
         });
     }
 
-    function checkNotificationPermission(bypassPreflight = false) {
+    function checkNotificationPermission() {
         return new Promise(function (resolve, reject) {
             if (Notification.permission === 'denied') {
                 setLSPermissionDenied();
@@ -203,37 +229,18 @@ window.EverlyticPushSDK = new function () {
                 return resolve();
             }
 
-            if (window.localStorage.getItem('everlytic.permission_granted') !== 'no' || debug) {
-                if (bypassPreflight) {
-                    return requestPermissionViaServiceWorker();
-                } else {
-                    openModal(preflight.title, preflight.message, preflight.icon, function(){
-                        return requestPermissionViaServiceWorker();
-                    }, function() {
+            if (Notification.permission === 'default') {
+                return Notification.requestPermission().then(function (result) {
+                    if (result !== 'granted') {
                         setLSPermissionDenied();
-                        return reject();
-                    });
-                }
-            } else {
-                setLSPermissionDenied();
-                return reject();
+                        return Promise.reject(new Error('Bad permission result'));
+                    }
+
+                    setLSPermissionGranted();
+                    return Promise.resolve();
+                });
             }
         });
-    }
-
-    function requestPermissionViaServiceWorker()
-    {
-        if (Notification.permission === 'default') {
-            return Notification.requestPermission().then(function (result) {
-                if (result !== 'granted') {
-                    setLSPermissionDenied();
-                    return Promise.reject(new Error('Bad permission result'));
-                }
-
-                setLSPermissionGranted();
-                return Promise.resolve();
-            });
-        }
     }
 
     function setLSPermissionDenied() {
@@ -337,6 +344,7 @@ window.EverlyticPushSDK = new function () {
         const formId = "eve-modal-form";
 
         EverlyticPushModal.open({
+            lock: true,
             content: getModalBasicCss() + `
 <form id="${formId}" action="#">
 <table width="100%">
@@ -351,7 +359,7 @@ window.EverlyticPushSDK = new function () {
         <br/>
         <br/>
         <div style="text-align:right;">
-            <input class="eve-modal-btn eve-modal-btn-grey" id="${cancelButtonId}" type="button" value="Cancel"/>
+            <input class="eve-modal-btn eve-modal-btn-grey" id="${cancelButtonId}" type="button" value="No Thanks"/>
             <input class="eve-modal-btn" id="${confirmButtonId}" type="submit" value="Confirm"/>
         </div>
     </td>
