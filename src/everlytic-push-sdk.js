@@ -40,7 +40,7 @@ window.EverlyticPushSDK = new function () {
 
     this.subscribeWithAskEmailPrompt = function(askMessage = "Please enter your email address to receive Push Notifications.") {
         const emailInputId = 'eve-modal-email';
-        return new Promise(function(resolve, reject){
+        return new Promise(function(resolve, reject) {
             if (debug || window.localStorage.getItem('everlytic.permission_granted') !== 'no') {
                 openModal(
                     askMessage,
@@ -72,8 +72,8 @@ window.EverlyticPushSDK = new function () {
         }
         return new Promise(function(resolve, reject) {
             if (debug || window.localStorage.getItem('everlytic.permission_granted') !== 'no') {
-                openModal(preflight.title, preflight.message, preflight.icon, function(){
-                    subscribeContact(contact).then(function(result){
+                openModal(preflight.title, preflight.message, preflight.icon, function() {
+                    subscribeContact(contact).then(function(result) {
                         resolve(result);
                     }).catch(function(err) {
                         setLSPermissionDenied();
@@ -158,13 +158,13 @@ window.EverlyticPushSDK = new function () {
                     outputDebug('[SW] Service worker has been registered');
 
                     if (config.autoSubscribe) {
-                        response.then(function(){
+                        response.then(function() {
                             that.subscribeAnonymous();
                         });
                     }
                 } else {
-                    window.location.reload(); // TODO Fix this.
                     outputDebug('[SW] Service worker has been registered, but not loaded. Reloading page.');
+                    window.location.reload(); // TODO Fix this.
                 }
             },
             function (e) {
@@ -201,7 +201,7 @@ window.EverlyticPushSDK = new function () {
                         window.localStorage.setItem("everlytic.subscription_id", response.data.subscription.pns_id);
                         resolve(event.data);
                     } else {
-                        unsubscribeFromServiceWorker().then(function(){
+                        unsubscribeFromServiceWorker().then(function() {
                             reject('Could not subscribe to Everlytic');
                         });
                     }
@@ -368,17 +368,16 @@ window.EverlyticPushSDK = new function () {
 </form>`,
             draggable: true,
             openCallback: function () {
-                document.getElementById(formId).onsubmit = function () {
+                document.getElementById(formId).onsubmit = function (event) {
+                    event.preventDefault();
                     confirmCallback();
                     EverlyticPushModal.close();
                 };
 
                 document.getElementById(cancelButtonId).onclick = function () {
+                    cancelCallback();
                     EverlyticPushModal.close();
                 };
-            },
-            closeCallback: function() {
-                cancelCallback();
             }
         });
     }
