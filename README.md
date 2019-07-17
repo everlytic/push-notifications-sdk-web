@@ -1,6 +1,5 @@
 # Everlytic Push Web SDK [![CircleCI](https://circleci.com/gh/everlytic/push-notifications-sdk-android/tree/master.svg?style=svg)](https://circleci.com/gh/everlytic/push-notifications-sdk-android/tree/master)
 
-## Official Documentation
 You can find the official Documentation [here](https://everlytic.github.io/push-notifications-documentation/web/readme.html).
 
 ## License
