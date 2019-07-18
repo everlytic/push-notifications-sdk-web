@@ -1,8 +1,8 @@
 window.EverlyticPushSDK = new function () {
     const anonymousEmail = 'anonymous@everlytic.com';
     let preflight = {
-        "title": "Push Notifications",
-        "message": "We would like to send you notifications for the latest news and updates.",
+        "title": "We would like to send you notifications for the latest news and updates.",
+        "message": "Unsubscribe anytime in your browser settings.",
         "icon": "https://d1vjq17neg4i9o.cloudfront.net/icon.png"
     };
 
@@ -351,7 +351,7 @@ window.EverlyticPushSDK = new function () {
 <tr>
     <td><img src="${iconSrc}" class="eve-modal-icon" /></td>
     <td>
-        <div style="text-align: center">
+        <div>
             <strong>${title}</strong>
         </div>
         <br/>
@@ -359,8 +359,8 @@ window.EverlyticPushSDK = new function () {
         <br/>
         <br/>
         <div style="text-align:right;">
-            <input class="eve-modal-btn eve-modal-btn-grey" id="${cancelButtonId}" type="button" value="No Thanks"/>
-            <input class="eve-modal-btn" id="${confirmButtonId}" type="submit" value="Confirm"/>
+            <input class="eve-modal-btn eve-modal-btn-grey" id="${cancelButtonId}" type="button" value="Maybe Later"/>
+            <input class="eve-modal-btn" id="${confirmButtonId}" type="submit" value="Allow"/>
         </div>
     </td>
 </tr>
@@ -427,6 +427,7 @@ window.EverlyticPushSDK = new function () {
     
     #eve-modal-container { 
         min-width: 600px;
+        max-width: 650px;
         background: #fff; 
         border: 1px solid #ababab; 
         box-shadow: 0px 4px 16px rgba(0, 0, 0, 0.2); 
