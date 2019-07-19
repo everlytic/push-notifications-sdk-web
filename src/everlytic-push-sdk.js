@@ -233,11 +233,11 @@ window.EverlyticPushSDK = new function () {
                 return Notification.requestPermission().then(function (result) {
                     if (result !== 'granted') {
                         setLSPermissionDenied();
-                        return Promise.reject(new Error('Bad permission result'));
+                        return reject(new Error('Bad permission result'));
                     }
 
                     setLSPermissionGranted();
-                    return Promise.resolve();
+                    return resolve();
                 });
             }
         });
