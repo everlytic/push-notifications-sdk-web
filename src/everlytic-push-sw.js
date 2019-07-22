@@ -35,6 +35,14 @@ self.addEventListener('notificationclick', function(event) {
         'metadata': {},
         'datetime': new Date().toISOString()
     });
+
+    event.notification.close();
+
+    if (event.notification.data.url) {
+        event.waitUntil(
+            clients.openWindow(event.notification.data.url)
+        );
+    }
 });
 
 self.addEventListener('notificationclose', function(event) {
