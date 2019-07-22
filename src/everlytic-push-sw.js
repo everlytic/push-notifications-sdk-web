@@ -18,7 +18,8 @@ self.addEventListener('push', function (event) {
 
         return self.registration.showNotification(notification.title, {
             body: notification.body,
-            data: notification.data
+            data: notification.data,
+            icon: notification.data.icon
         });
     };
 
