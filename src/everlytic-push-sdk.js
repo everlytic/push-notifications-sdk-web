@@ -358,10 +358,14 @@ window.EverlyticPushSDK = new function () {
         ${body}
         <br/>
         <br/>
+    </td>
+</tr>
+<tr>
+    <td colspan="2">
         <div style="text-align:right;">
             <input class="eve-modal-btn eve-modal-btn-grey" id="${cancelButtonId}" type="button" value="Maybe Later"/>
             <input class="eve-modal-btn" id="${confirmButtonId}" type="submit" value="Allow"/>
-        </div>
+        </div>    
     </td>
 </tr>
 </table>
@@ -426,7 +430,6 @@ window.EverlyticPushSDK = new function () {
     } 
     
     #eve-modal-container { 
-        min-width: 600px;
         max-width: 650px;
         background: #fff; 
         border: 1px solid #ababab; 
@@ -437,7 +440,7 @@ window.EverlyticPushSDK = new function () {
         font-size: 14px; 
         position: absolute; 
         z-index: 998;
-    } 
+    }     
     
     #eve-modal-header { 
         height: 20px; 
@@ -476,6 +479,27 @@ window.EverlyticPushSDK = new function () {
     #eve-modal-content td {
         vertical-align: top;
         padding: 0 15px 15px 15px;
+    }
+    
+
+    @media only screen and (max-width: 600px) {
+        #eve-modal-container {
+            width: 99% !important;
+            top: 1px !important;
+            left: 1px !important;
+        }
+        #eve-modal-content {
+            padding: 0 !important;
+        }
+        #eve-modal-content td {
+            padding: 0 5px 5px 5px !important;
+        }
+        #eve-modal-header {
+            height: 5px !important;
+        }
+        .eve-modal-icon {
+            width: 100% !important;
+        }
     }
 </style>`;
     }
