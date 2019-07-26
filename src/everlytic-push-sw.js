@@ -6,19 +6,22 @@ self.addEventListener('push', function (event) {
 
         if (event.data) {
             let notification = JSON.parse(event.data.text());
-            talkToEverlytic('deliveries', {
-                'message_id': notification.data.message_id,
-                'subscription_id': notification.data.subscription_id,
-                'metadata': {},
-                'datetime': new Date().toISOString()
-            });
 
             self.registration.showNotification(notification.title, {
                 body: notification.body,
                 data: notification.data,
                 icon: notification.data.icon
             }).then(function(){
-                resolve();
+                talkToEverlytic('deliveries', {
+                    'message_id': notification.data.message_id,
+                    'subscription_id': notification.data.subscription_id,
+                    'metadata': {},
+                    'datetime': new Date().toISOString()
+                }, function(){
+                    resolve();
+                }, function() {
+                    reject();
+                });
             });
         }
     }));
@@ -26,26 +29,31 @@ self.addEventListener('push', function (event) {
 
 self.addEventListener('notificationclick', function(event) {
     event.waitUntil(new Promise(function(resolve, reject) {
-        let recordClick = function() {
+        let recordClick = function(successCallback, errorCallback) {
             talkToEverlytic('clicks', {
                 'message_id': event.notification.data.message_id,
                 'subscription_id': event.notification.data.subscription_id,
                 'metadata': {},
                 'datetime': new Date().toISOString()
-            });
+            }, successCallback, errorCallback);
         };
 
         if (event.notification.data.url && event.notification.data.url != '') {
             clients.openWindow(event.notification.data.url).then(function(){
-                recordClick();
-                event.notification.close();
-                resolve();
+                recordClick(function(){
+                    event.notification.close();
+                    resolve();
+                }, function() {
+                    reject();
+                });
             });
         } else {
-            recordClick();
-            resolve();
+            recordClick(function(){
+                resolve();
+            }, function() {
+                reject();
+            });
         }
-
     }));
 });
 
@@ -56,6 +64,10 @@ self.addEventListener('notificationclose', function(event) {
             'subscription_id': event.notification.data.subscription_id,
             'metadata': {},
             'datetime': new Date().toISOString()
+        }, function() {
+            resolve();
+        }, function() {
+            reject();
         });
     }));
 });
