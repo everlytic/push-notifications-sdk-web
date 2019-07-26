@@ -1,65 +1,73 @@
-let install = '';
-let projectUuid = '';
-
 self.addEventListener('push', function (event) {
-    if (!(self.Notification && self.Notification.permission === 'granted')) {
-        return;
-    }
+    event.waitUntil(new Promise(function(resolve, reject) {
+        if (!(self.Notification && self.Notification.permission === 'granted')) {
+            reject();
+        }
 
-    const sendNotification = function(notificationEncoded) {
-        let notification = JSON.parse(notificationEncoded);
+        if (event.data) {
+            let notification = JSON.parse(event.data.text());
+            talkToEverlytic('deliveries', {
+                'message_id': notification.data.message_id,
+                'subscription_id': notification.data.subscription_id,
+                'metadata': {},
+                'datetime': new Date().toISOString()
+            });
 
-        talkToEverlytic('deliveries', {
-            'message_id': notification.data.message_id,
-            'subscription_id': notification.data.subscription_id,
-            'metadata': {},
-            'datetime': new Date().toISOString()
-        });
-
-        return self.registration.showNotification(notification.title, {
-            body: notification.body,
-            data: notification.data,
-            icon: notification.data.icon
-        });
-    };
-
-    if (event.data) {
-        const message = event.data.text();
-        event.waitUntil(sendNotification(message));
-    }
+            self.registration.showNotification(notification.title, {
+                body: notification.body,
+                data: notification.data,
+                icon: notification.data.icon
+            }).then(function(){
+                resolve();
+            });
+        }
+    }));
 });
 
 self.addEventListener('notificationclick', function(event) {
-    talkToEverlytic('clicks', {
-        'message_id': event.notification.data.message_id,
-        'subscription_id': event.notification.data.subscription_id,
-        'metadata': {},
-        'datetime': new Date().toISOString()
-    });
+    event.waitUntil(new Promise(function(resolve, reject) {
+        let recordClick = function() {
+            talkToEverlytic('clicks', {
+                'message_id': event.notification.data.message_id,
+                'subscription_id': event.notification.data.subscription_id,
+                'metadata': {},
+                'datetime': new Date().toISOString()
+            });
+        };
 
-    event.notification.close();
+        if (event.notification.data.url && event.notification.data.url != '') {
+            clients.openWindow(event.notification.data.url).then(function(){
+                recordClick();
+                event.notification.close();
+                resolve();
+            });
+        } else {
+            recordClick();
+            resolve();
+        }
 
-    if (event.notification.data.url && event.notification.data.url != '') {
-        event.waitUntil(
-            clients.openWindow(event.notification.data.url)
-        );
-    }
+    }));
 });
 
 self.addEventListener('notificationclose', function(event) {
-    talkToEverlytic('dismissals', {
-        'message_id': event.notification.data.message_id,
-        'subscription_id': event.notification.data.subscription_id,
-        'metadata': {},
-        'datetime': new Date().toISOString()
-    });
+    event.waitUntil(new Promise(function(resolve, reject) {
+        talkToEverlytic('dismissals', {
+            'message_id': event.notification.data.message_id,
+            'subscription_id': event.notification.data.subscription_id,
+            'metadata': {},
+            'datetime': new Date().toISOString()
+        });
+    }));
 });
 
 self.addEventListener('message', function(event) {
     if (event.data.type === 'initialize') {
-        install = event.data.install;
-        projectUuid = event.data.projectUuid;
-        event.ports[0].postMessage('success');
+        saveSettings({
+            'projectUuid': event.data.projectUuid,
+            'install': event.data.install
+        }, function() {
+            event.ports[0].postMessage({'status':'success'});
+        });
     } else if (['subscribe', 'unsubscribe'].indexOf(event.data.type) !== -1) {
         talkToEverlytic(event.data.type, event.data.data, function(result){
             event.ports[0].postMessage(result);
@@ -67,32 +75,108 @@ self.addEventListener('message', function(event) {
     }
 });
 
-function talkToEverlytic(type, data, successCallback) {
+function talkToEverlytic(type, data, successCallback, errorCallback) {
     if (['subscribe', 'unsubscribe', 'deliveries', 'clicks', 'dismissals'].indexOf(type) === -1) {
         throw 'Invalid event type';
     }
 
-    fetch(
-        install + '/servlet/push-notifications/' + type,
-        {
-            method: 'POST',
-            mode: 'cors',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-EV-Project-UUID': projectUuid
-            },
-            body: JSON.stringify(data)
-        }
-    ).then(function(result){
-        if (successCallback && successCallback instanceof Function) {
-            result.json().then(function(jsonResult){
-                successCallback(jsonResult);
-            });
-        }
-    }).catch(function(err) {
-        console.error(err);
-    });
+    loadSettings(function(settings) {
+        let install = '';
+        let projectUuid = '';
 
+        settings.forEach(function(setting){
+            if (setting.id === 'install') {
+                install = setting.data;
+            } else if (setting.id === 'projectUuid') {
+                projectUuid = setting.data;
+            }
+        });
+
+        fetch(
+            install + '/servlet/push-notifications/' + type,
+            {
+                method: 'POST',
+                mode: 'cors',
+                credentials: 'omit',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-EV-Project-UUID': projectUuid
+                },
+                body: JSON.stringify(data)
+            }
+        ).then(function(result){
+            if (successCallback && successCallback instanceof Function) {
+                result.json().then(function(jsonResult){
+                    successCallback(jsonResult);
+                });
+            }
+        }).catch(function(err) {
+            console.error(err);
+            if (errorCallback && errorCallback instanceof Function) {
+                errorCallback(err);
+            }
+        });
+    });
+}
+
+/****************************
+ ** Start of IndexDB Stuff **
+ ****************************/
+
+function openIndexedDB () {
+    let openDB = indexedDB.open("everlytic", 1);
+
+    openDB.onupgradeneeded = function() {
+        let db = {};
+        db.result = openDB.result;
+        db.store = db.result.createObjectStore("settings", {keyPath: "id"});
+    };
+
+    return openDB;
+}
+
+function getStoreIndexedDB (openDB) {
+    let db = {};
+    db.result = openDB.result;
+    db.tx = db.result.transaction("settings", "readwrite");
+    db.store = db.tx.objectStore("settings");
+
+    return db;
+}
+
+function saveSettings (settings, successCallback) {
+    let openDB = openIndexedDB();
+
+    openDB.onsuccess = function() {
+        let db = getStoreIndexedDB(openDB);
+        for (let key in settings) {
+            if (!settings.hasOwnProperty(key)) continue;
+            let value = settings[key];
+
+            db.store.put({id: key, data: value});
+        }
+
+        successCallback();
+    };
+}
+
+function loadSettings (callback) {
+    let openDB = openIndexedDB();
+
+    openDB.onsuccess = function() {
+        let db = getStoreIndexedDB(openDB);
+        let getData = db.store.getAll();
+
+        getData.onsuccess = function() {
+            callback(getData.result);
+        };
+
+        db.tx.oncomplete = function() {
+            db.result.close();
+        };
+    };
+
+    return true;
 }
 
 /************************
