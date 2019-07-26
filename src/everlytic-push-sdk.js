@@ -147,7 +147,10 @@ window.EverlyticPushSDK = new function () {
             window.localStorage.setItem('everlytic.device_id', uuidv4());
         }
 
-        navigator.serviceWorker.register('load-worker.js').then(
+        navigator.serviceWorker.register(
+            'load-worker.js',
+            {updateViaCache: 'none'}
+        ).then(
             function () {
                 if (navigator.serviceWorker.controller) {
                     const response = postMessageToServiceWorker({
