@@ -79,23 +79,32 @@ window.EverlyticPushSDK = new function () {
             throw 'contact.email is required.';
         }
         return new Promise(function(resolve, reject) {
-            if (debug || window.localStorage.getItem('everlytic.permission_granted') !== 'no') {
-                openModal(preflight.title, preflight.message, preflight.icon, function() {
+            let pfPermission = window.localStorage.getItem('everlytic.permission_granted');
+            if (debug || pfPermission !== 'no') {
+                if (pfPermission === 'yes') {
                     subscribeContact(contact).then(function(result) {
                         resolve(result);
                     }).catch(function(err) {
                         setLSPermissionDenied();
                         reject(err);
                     });
-                }, function() {
-                    setLSPermissionDenied();
-                    reject('User denied pre-flight');
-                });
+                } else {
+                    openModal(preflight.title, preflight.message, preflight.icon, function() {
+                        subscribeContact(contact).then(function(result) {
+                            resolve(result);
+                        }).catch(function(err) {
+                            setLSPermissionDenied();
+                            reject(err);
+                        });
+                    }, function() {
+                        setLSPermissionDenied();
+                        reject('User denied pre-flight');
+                    });
+                }
             } else {
                 reject('User has denied pre-flight recently. You will need to reset this manually.');
             }
         });
-
     };
 
     this.unsubscribe = function () {
