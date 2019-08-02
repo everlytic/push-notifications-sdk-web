@@ -453,7 +453,7 @@ window.EverlyticPushSDK = new function () {
         font-family: arial,sans-serif; 
         font-size: 14px; 
         position: absolute; 
-        z-index: 998;
+        z-index: 2147483648;
     }     
     
     #eve-modal-header { 
