@@ -43,7 +43,7 @@ window.EverlyticPushSDK = new function () {
     };
 
     this.subscribeAnonymous = function () {
-        return subscribeContact({"email": anonymousEmail});
+        return this.subscribe({"email": anonymousEmail});
     };
 
     this.subscribeWithAskEmailPrompt = function(askMessage = "Please enter your email address to receive Push Notifications.") {
