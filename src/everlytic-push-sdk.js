@@ -5,7 +5,10 @@ window.EverlyticPushSDK = new function () {
         "message": "Unsubscribe anytime in your browser settings.",
         "icon": "https://d1vjq17neg4i9o.cloudfront.net/icon.png"
     };
-    let workerFile = 'load-worker.js';
+    let worker = {
+        "file": "load-worker.js",
+        "scope": "/",
+    };
 
     let install = '';
     let projectUuid = '';
@@ -24,8 +27,8 @@ window.EverlyticPushSDK = new function () {
             debug = true;
         }
 
-        if (config.workerFile) {
-            workerFile = config.workerFile;
+        if (config.worker) {
+            worker = Object.assign(worker, config.worker);
         }
 
         if (config.preflight && typeof config.preflight === 'object') {
@@ -153,8 +156,11 @@ window.EverlyticPushSDK = new function () {
         }
 
         navigator.serviceWorker.register(
-            workerFile,
-            {updateViaCache: 'none'}
+            worker.file,
+            {
+                scope: worker.scope,
+                updateViaCache: 'none',
+            }
         ).then(
             function () {
                 if (navigator.serviceWorker.controller) {
