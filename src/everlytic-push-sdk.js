@@ -5,6 +5,7 @@ window.EverlyticPushSDK = new function () {
         "message": "Unsubscribe anytime in your browser settings.",
         "icon": "https://d1vjq17neg4i9o.cloudfront.net/icon.png"
     };
+    let workerFile = 'load-worker.js';
 
     let install = '';
     let projectUuid = '';
@@ -21,6 +22,10 @@ window.EverlyticPushSDK = new function () {
 
         if (config.debug) {
             debug = true;
+        }
+
+        if (config.workerFile) {
+            workerFile = config.workerFile;
         }
 
         if (config.preflight && typeof config.preflight === 'object') {
@@ -148,7 +153,7 @@ window.EverlyticPushSDK = new function () {
         }
 
         navigator.serviceWorker.register(
-            'load-worker.js',
+            workerFile,
             {updateViaCache: 'none'}
         ).then(
             function () {
