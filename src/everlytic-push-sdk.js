@@ -3,7 +3,8 @@ window.EverlyticPushSDK = new function () {
     let preflight = {
         "title": "We would like to send you notifications for the latest news and updates.",
         "message": "Unsubscribe anytime in your browser settings.",
-        "icon": "https://d1vjq17neg4i9o.cloudfront.net/icon.png"
+        "icon": "https://d1vjq17neg4i9o.cloudfront.net/icon.png",
+        "primaryColour": "#94d229"
     };
     let worker = {
         "file": "load-worker.js",
@@ -413,7 +414,7 @@ window.EverlyticPushSDK = new function () {
         return `
 <style>
     .eve-modal-btn {
-        background-color: #94d229;
+        background-color: ${preflight.primaryColour};
         border: none;
         color: white;
         padding: 15px 32px;

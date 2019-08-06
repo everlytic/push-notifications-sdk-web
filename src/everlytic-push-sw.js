@@ -10,7 +10,8 @@ self.addEventListener('push', function (event) {
             self.registration.showNotification(notification.title, {
                 body: notification.body,
                 data: notification.data,
-                icon: notification.data.icon
+                icon: notification.data.icon,
+                requireInteraction: true
             }).then(function(){
                 talkToEverlytic('deliveries', {
                     'message_id': notification.data.message_id,
