@@ -130,6 +130,7 @@ window.EverlyticPushSDK = new function () {
      ***** Private Functions *****
      *****************************/
 
+
     function initializeServiceWorker(config) {
         const configDecoded = atob(config.hash);
         const configArray = configDecoded.split(";");
@@ -161,6 +162,28 @@ window.EverlyticPushSDK = new function () {
             throw 'Notifications are denied by the user';
         }
 
+        let oldProjectUuid = window.localStorage.getItem('projectUuid');
+
+        // If the project changed, reset all data.
+        if (oldProjectUuid !== projectUuid) {
+            outputDebug('Old Project: ' + oldProjectUuid + ' does not match new Project: ' + projectUuid + ' - Resetting localstorage.');
+            window.localStorage.clear();
+            window.localStorage.setItem('projectUuid', projectUuid);
+
+            navigator.serviceWorker.getRegistrations().then(function(registrations) {
+                for(let registration of registrations) {
+                    registration.unregister();
+                }
+
+                registerServiceWorker(config);
+            });
+        } else {
+            registerServiceWorker(config);
+        }
+    }
+
+    function registerServiceWorker(config)
+    {
         if (!window.localStorage.getItem('everlytic.device_id')) {
             window.localStorage.setItem('everlytic.device_id', uuidv4());
         }
