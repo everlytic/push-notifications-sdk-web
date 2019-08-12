@@ -28,6 +28,22 @@ self.addEventListener('push', function (event) {
     }));
 });
 
+// TODO CHECK THAT THIS STILL WORKS WITH CLOSE BUTTON
+self.addEventListener('notificationclose', function(event) {
+    event.waitUntil(new Promise(function(resolve, reject) {
+        talkToEverlytic('dismissals', {
+            'message_id': event.notification.data.message_id,
+            'subscription_id': event.notification.data.subscription_id,
+            'metadata': {},
+            'datetime': new Date().toISOString()
+        }, function() {
+            resolve();
+        }, function() {
+            reject();
+        });
+    }));
+});
+
 self.addEventListener('notificationclick', function(event) {
     event.waitUntil(new Promise(function(resolve, reject) {
         let recordClick = function(successCallback, errorCallback) {
@@ -55,21 +71,6 @@ self.addEventListener('notificationclick', function(event) {
                 reject();
             });
         }
-    }));
-});
-
-self.addEventListener('notificationclose', function(event) {
-    event.waitUntil(new Promise(function(resolve, reject) {
-        talkToEverlytic('dismissals', {
-            'message_id': event.notification.data.message_id,
-            'subscription_id': event.notification.data.subscription_id,
-            'metadata': {},
-            'datetime': new Date().toISOString()
-        }, function() {
-            resolve();
-        }, function() {
-            reject();
-        });
     }));
 });
 
