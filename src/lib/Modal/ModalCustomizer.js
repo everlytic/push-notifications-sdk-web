@@ -10,7 +10,15 @@ export default class ModalCustomizer {
         this.modal = new Modal();
     }
 
-    open(title, body, iconSrc, confirmCallback, cancelCallback) {
+    open(title, body, iconSrc, callbacks, confirmText, cancelText) {
+
+        if (!confirmText) {
+            confirmText = "Allow";
+        }
+        if (!cancelText) {
+            cancelText = "Maybe Later";
+        }
+
         this.modal.open({
             lock: true,
             content: this.getModalBasicCss() + `
@@ -31,8 +39,8 @@ export default class ModalCustomizer {
 <tr>
     <td colspan="2">
         <div style="text-align:right;">
-            <input class="eve-modal-btn eve-modal-btn-grey" id="${this.cancelButtonId}" type="button" value="Maybe Later"/>
-            <input class="eve-modal-btn" id="${this.confirmButtonId}" type="submit" value="Allow"/>
+            <input class="eve-modal-btn eve-modal-btn-grey" id="${this.cancelButtonId}" type="button" value="${cancelText}"/>
+            <input class="eve-modal-btn" id="${this.confirmButtonId}" type="submit" value="${confirmText}"/>
         </div>    
     </td>
 </tr>
@@ -42,12 +50,21 @@ export default class ModalCustomizer {
             openCallback: () => {
                 document.getElementById(this.formId).onsubmit = (event) => {
                     event.preventDefault();
-                    confirmCallback();
+                    if (typeof callbacks.beforeConfirmCallback === 'function') {
+                        callbacks.beforeConfirmCallback();
+                    }
+
                     this.modal.close();
+
+                    if (typeof callbacks.afterConfirmCallback === 'function') {
+                        callbacks.afterConfirmCallback();
+                    }
                 };
 
                 document.getElementById(this.cancelButtonId).onclick = () => {
-                    cancelCallback();
+                    if (typeof callbacks.cancelCallback === 'function') {
+                        callbacks.cancelCallback();
+                    }
                     this.modal.close();
                 };
             }

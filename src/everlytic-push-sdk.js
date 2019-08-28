@@ -41,6 +41,7 @@ window.EverlyticPushSDK = new function () {
         return new Promise(function(resolve, reject) {
             if (debug || window.localStorage.getItem('everlytic.permission_granted') !== 'no') {
                 modalHandler.openAskEmailPrompt(
+                    anonymousEmail,
                     function (email) {
                         subscribeContact({"email": email}).then(function (result) {
                             resolve(result);

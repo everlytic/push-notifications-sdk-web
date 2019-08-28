@@ -25,20 +25,33 @@ export default class ModalHandler {
             this.preflight.title,
             this.preflight.message,
             this.preflight.icon,
-            confirmCallback,
-            cancelCallback
+            {
+                afterConfirmCallback: confirmCallback,
+                cancelCallback: cancelCallback
+            },
         );
     }
 
-    openAskEmailPrompt(confirmCallback, cancelCallback) {
+    openAskEmailPrompt(anonymousEmail, confirmCallback, cancelCallback) {
         const emailInputId = 'eve-modal-email';
 
-        this.modalCustomizer.open(
-            "Please enter your email address to receive Push Notifications.",
-            `<input class="eve-modal-input" type="email" placeholder="hello@example.com" id="${emailInputId}" name="${emailInputId}" required />`,
-            this.preflight.icon,
-            function() {
-                confirmCallback(document.getElementById(emailInputId).value);
+        this.open(
+            () => {
+                this.modalCustomizer.open(
+                    "Please enter your email address to receive Push Notifications.",
+                    `<input class="eve-modal-input" type="email" placeholder="hello@example.com" id="${emailInputId}" name="${emailInputId}" required />`,
+                    this.preflight.icon,
+                    {
+                        beforeConfirmCallback: function () {
+                            confirmCallback(document.getElementById(emailInputId).value);
+                        },
+                        cancelCallback: function() {
+                            confirmCallback(anonymousEmail);
+                        },
+                    },
+                    'Subscribe with email',
+                    'Subscribe anonymously'
+                );
             },
             cancelCallback
         );
