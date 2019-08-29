@@ -27,8 +27,8 @@ export default class ModalCustomizer {
 <tr>
     <td><img src="${iconSrc}" class="eve-modal-icon" /></td>
     <td>
-        <div>
-            <strong>${title}</strong>
+        <div class="eve-modal-title">
+            ${title}
         </div>
         <br/>
         ${body}
@@ -75,96 +75,101 @@ export default class ModalCustomizer {
         return `
 <style>
     .eve-modal-btn {
-        background-color: ${this.primaryColour};
-        border: none;
-        color: white;
-        padding: 15px 32px;
-        text-align: center;
-        text-decoration: none;
-        display: inline-block;
-        font-size: 16px;
-        cursor: pointer;
+        background-color: ${this.primaryColour} !important;
+        border: none !important;
+        color: white !important;
+        padding: 15px 32px !important;
+        text-align: center !important;
+        text-decoration: none !important;
+        display: inline-block !important;
+        font-size: 16px !important;
+        cursor: pointer !important;
     }
     
     .eve-modal-icon {
-        width: 125px;
+        width: 125px !important;
     }
     
     .eve-modal-btn-grey {
-        background-color: #e7e7e7; 
-        color: black;
+        background-color: #e7e7e7 !important; 
+        color: black !important;
     }
     
     .eve-modal-input {
-        width: 100%;
-        padding: 12px 20px;
-        margin: 8px 0;
-        box-sizing: border-box;
-        border-color: lightgrey;
+        width: 100% !important;
+        padding: 12px 20px !important;
+        margin: 8px 0 !important;
+        box-sizing: border-box !important;
+        border: 1px solid lightgray !important;
+    }
+    
+    .eve-modal-title {
+        font-size: larger !important;
+        font-weight: bold !important;
     }
     
     #eve-modal-overlay { 
-        background: #fff; 
-        filter: alpha(opacity=60); 
-        height: 100%; left: 0; 
-        -moz-opacity: 0.6; 
-        -webkit-opacity: 0.6; 
-        -ms-filter: alpha(opacity=60); 
-        opacity: 0.6; position: absolute; 
-        top: 0; 
-        width: 100%; 
-        z-index: 998;
+        background: #fff !important; 
+        filter: alpha(opacity=60) !important; 
+        height: 100%; left: 0 !important; 
+        -moz-opacity: 0.6 !important; 
+        -webkit-opacity: 0.6 !important; 
+        -ms-filter: alpha(opacity=60) !important; 
+        opacity: 0.6; position: absolute !important; 
+        top: 0 !important; 
+        width: 100% !important; 
+        z-index: 998 !important;
     } 
     
     #eve-modal-container { 
-        max-width: 650px;
-        background: #fff; 
-        border: 1px solid #ababab; 
-        box-shadow: 0px 4px 16px rgba(0, 0, 0, 0.2); 
-        height: auto; 
-        padding: 10px; 
-        font-family: arial,sans-serif; 
-        font-size: 14px; 
-        position: absolute; 
-        z-index: 2147483648;
+        max-width: 650px !important;
+        background: #fff !important; 
+        border: 1px solid #ababab !important; 
+        box-shadow: 0px 4px 16px rgba(0, 0, 0, 0.2) !important; 
+        height: auto !important; 
+        padding: 10px !important; 
+        font-family: arial,sans-serif !important; 
+        font-size: 14px !important; 
+        position: absolute !important; 
+        z-index: 2147483648 !important;
     }     
     
     #eve-modal-header { 
-        height: 20px; 
-        overflow: hidden;   
-        clear: both; 
+        height: 20px !important; 
+        overflow: hidden !important;   
+        clear: both !important; 
     } 
     
     #eve-modal-close { 
-        background: #fff url('https://d1vjq17neg4i9o.cloudfront.net/modal-close.png') no-repeat center center; 
-        cursor: pointer; 
-        display: block; 
-        filter: alpha(opacity=60); 
-        -moz-opacity: 0.6; 
-        -webkit-opacity: 0.6; 
-        -ms-filter: alpha(opacity=60); 
-        opacity: 0.6; 
-        float: right; 
-        height: 20px; 
-        width: 20px;
+        background: #fff url('https://d1vjq17neg4i9o.cloudfront.net/modal-close.png') no-repeat center center !important; 
+        cursor: pointer !important; 
+        display: block !important; 
+        filter: alpha(opacity=60) !important; 
+        -moz-opacity: 0.6 !important; 
+        -webkit-opacity: 0.6 !important; 
+        -ms-filter: alpha(opacity=60) !important; 
+        opacity: 0.6 !important; 
+        float: right !important; 
+        height: 20px !important; 
+        width: 20px !important;
     } 
     
     #modal-close:hover { 
-        filter: alpha(opacity=100); 
-        -moz-opacity: 1.0; 
-        -webkit-opacity: 1.0; 
-        -ms-filter: alpha(opacity=100); 
-        opacity: 1.0;
+        filter: alpha(opacity=100) !important; 
+        -moz-opacity: 1.0 !important; 
+        -webkit-opacity: 1.0 !important; 
+        -ms-filter: alpha(opacity=100) !important; 
+        opacity: 1.0 !important;
     } 
         
     #eve-modal-content { 
-        display: block; 
-        z-index: 999;
+        display: block !important; 
+        z-index: 999 !important;
     } 
     
     #eve-modal-content td {
-        vertical-align: top;
-        padding: 0 15px 15px 15px;
+        vertical-align: top !important;
+        padding: 0 15px 15px 15px !important;
     }
     
 
