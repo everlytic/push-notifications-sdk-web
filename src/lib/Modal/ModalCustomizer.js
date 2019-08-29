@@ -83,6 +83,7 @@ export default class ModalCustomizer {
         text-decoration: none;
         display: inline-block;
         font-size: 16px;
+        cursor: pointer;
     }
     
     .eve-modal-icon {
@@ -99,6 +100,7 @@ export default class ModalCustomizer {
         padding: 12px 20px;
         margin: 8px 0;
         box-sizing: border-box;
+        border-color: lightgrey;
     }
     
     #eve-modal-overlay { 
@@ -157,7 +159,6 @@ export default class ModalCustomizer {
         
     #eve-modal-content { 
         display: block; 
-        padding: 15px;
         z-index: 999;
     } 
     
