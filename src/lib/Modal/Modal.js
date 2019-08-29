@@ -120,7 +120,7 @@ export default class Modal {
             differenceX = xPosition - this.modalContainer.offsetLeft,
             differenceY = yPosition - this.modalContainer.offsetTop;
 
-        document.onmousemove = function (e) {
+        document.onmousemove = (e) => {
             xPosition = (window.event !== undefined) ? window.event.clientX : e.clientX;
             yPosition = (window.event !== undefined) ? window.event.clientY : e.clientY;
 

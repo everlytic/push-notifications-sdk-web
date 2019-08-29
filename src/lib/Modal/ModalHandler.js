@@ -42,10 +42,10 @@ export default class ModalHandler {
                     `<input class="eve-modal-input" type="email" placeholder="hello@example.com" id="${emailInputId}" name="${emailInputId}" required />`,
                     this.preflight.icon,
                     {
-                        beforeConfirmCallback: function () {
+                        beforeConfirmCallback: () => {
                             confirmCallback(document.getElementById(emailInputId).value);
                         },
-                        cancelCallback: function() {
+                        cancelCallback: () => {
                             confirmCallback(anonymousEmail);
                         },
                     },

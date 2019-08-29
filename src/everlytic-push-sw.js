@@ -94,11 +94,11 @@ function talkToEverlytic(type, data, successCallback, errorCallback) {
         throw 'Invalid event type';
     }
 
-    loadSettings(function(settings) {
+    loadSettings((settings) => {
         let install = '';
         let projectUuid = '';
 
-        settings.forEach(function(setting){
+        settings.forEach((setting) => {
             if (setting.id === 'install') {
                 install = setting.data;
             } else if (setting.id === 'projectUuid') {
@@ -118,13 +118,13 @@ function talkToEverlytic(type, data, successCallback, errorCallback) {
                 },
                 body: JSON.stringify(data)
             }
-        ).then(function(result){
+        ).then((result) => {
             if (successCallback && successCallback instanceof Function) {
-                result.json().then(function(jsonResult){
+                result.json().then((jsonResult) => {
                     successCallback(jsonResult);
                 });
             }
-        }).catch(function(err) {
+        }).catch((err) => {
             console.error(err);
             if (errorCallback && errorCallback instanceof Function) {
                 errorCallback(err);
@@ -140,7 +140,7 @@ function talkToEverlytic(type, data, successCallback, errorCallback) {
 function openIndexedDB () {
     let openDB = indexedDB.open("everlytic", 1);
 
-    openDB.onupgradeneeded = function() {
+    openDB.onupgradeneeded = () => {
         let db = {};
         db.result = openDB.result;
         db.store = db.result.createObjectStore("settings", {keyPath: "id"});
@@ -161,7 +161,7 @@ function getStoreIndexedDB (openDB) {
 function saveSettings (settings, successCallback) {
     let openDB = openIndexedDB();
 
-    openDB.onsuccess = function() {
+    openDB.onsuccess = () => {
         let db = getStoreIndexedDB(openDB);
         for (let key in settings) {
             if (!settings.hasOwnProperty(key)) continue;
@@ -177,15 +177,15 @@ function saveSettings (settings, successCallback) {
 function loadSettings (callback) {
     let openDB = openIndexedDB();
 
-    openDB.onsuccess = function() {
+    openDB.onsuccess = () => {
         let db = getStoreIndexedDB(openDB);
         let getData = db.store.getAll();
 
-        getData.onsuccess = function() {
+        getData.onsuccess = () => {
             callback(getData.result);
         };
 
-        db.tx.oncomplete = function() {
+        db.tx.oncomplete = () => {
             db.result.close();
         };
     };
@@ -197,10 +197,10 @@ function loadSettings (callback) {
  ** Other random stuff **
  ************************/
 
-self.addEventListener('install', function(event) {
+self.addEventListener('install', (event) => {
     event.waitUntil(self.skipWaiting()); // Activate worker immediately
 });
 
-self.addEventListener('activate', function(event) {
+self.addEventListener('activate', (event) => {
     event.waitUntil(self.clients.claim()); // Become available to all pages
 });
