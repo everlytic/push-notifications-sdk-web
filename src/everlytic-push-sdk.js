@@ -3,16 +3,16 @@ import Device from './lib/Device';
 import Helper from './lib/Helper';
 
 window.EverlyticPushSDK = new function () {
+    let worker = {
+        "file": "/load-worker.js"
+    };
+
     const anonymousEmail = 'anonymous@everlytic.com';
     let install = '';
     let publicKey = '';
     let projectUuid = '';
     let debug = false;
     let modalHandler = {};
-    let worker = {
-        "file": "load-worker.js",
-        "scope": "/",
-    };
 
     let that = this;
 
@@ -192,8 +192,7 @@ window.EverlyticPushSDK = new function () {
         navigator.serviceWorker.register(
             worker.file,
             {
-                scope: worker.scope,
-                updateViaCache: 'none',
+                updateViaCache: 'none'
             }
         ).then(
             function () {
