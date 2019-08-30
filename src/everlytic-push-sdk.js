@@ -38,25 +38,34 @@ window.EverlyticPushSDK = new function () {
         return this.subscribe({"email": anonymousEmail});
     };
 
-    this.subscribeWithAskEmailPrompt = () => {
+    this.subscribeWithAskEmailPrompt = (optionsParam) => {
+        let options = {force:false};
+        if (optionsParam) {
+            options = Object.assign(options, optionsParam);
+        }
+
         return new Promise((resolve, reject) => {
             if (navigator.serviceWorker.controller) {
                 if (debug || window.localStorage.getItem('everlytic.permission_granted') !== 'no') {
-                    modalHandler.openAskEmailPrompt(
-                        anonymousEmail,
-                        (email) => {
-                            subscribeContact({"email": email}).then( (result) => {
-                                resolve(result);
-                            }).catch((err) => {
+                    if (window.localStorage.getItem('everlytic.permission_granted') === 'yes' && !options.force) {
+                        reject('User already subscribed. Use force option to ask anyway.');
+                    } else {
+                        modalHandler.openAskEmailPrompt(
+                            anonymousEmail,
+                            (email) => {
+                                subscribeContact({"email": email}).then( (result) => {
+                                    resolve(result);
+                                }).catch((err) => {
+                                    setLSPermissionDenied();
+                                    reject(err);
+                                });
+                            },
+                            () => {
                                 setLSPermissionDenied();
-                                reject(err);
-                            });
-                        },
-                        () => {
-                            setLSPermissionDenied();
-                            reject('User denied pre-flight');
-                        }
-                    )
+                                reject('User denied pre-flight');
+                            }
+                        )
+                    }
                 } else {
                     reject('User has denied pre-flight recently. You will need to reset this manually.');
                 }
@@ -237,7 +246,7 @@ window.EverlyticPushSDK = new function () {
                 return new Promise((resolve, reject) => {
                     if (response.data && response.data.subscription.pns_id) {
                         window.localStorage.setItem("everlytic.subscription_id", response.data.subscription.pns_id);
-                        resolve(event.data);
+                        resolve(response.data);
                     } else {
                         unsubscribeFromServiceWorker().then(() => {
                             reject('Could not subscribe to Everlytic');

@@ -31,7 +31,7 @@ export default class ModalCustomizer {
             ${title}
         </div>
         <br/>
-        ${body}
+        <span class="eve-modal-body">${body}</span>
         <br/>
         <br/>
     </td>
@@ -75,6 +75,7 @@ export default class ModalCustomizer {
         return `
 <style>
     .eve-modal-btn {
+        font-family: Muli, Arial, Helvetica, sans-serif;
         background-color: ${this.primaryColour} !important;
         border: none !important;
         color: white !important;
@@ -84,6 +85,7 @@ export default class ModalCustomizer {
         display: inline-block !important;
         font-size: 16px !important;
         cursor: pointer !important;
+        border-radius: 2px!important;
     }
     
     .eve-modal-icon {
@@ -96,6 +98,7 @@ export default class ModalCustomizer {
     }
     
     .eve-modal-input {
+        font-family: Muli, Arial, Helvetica, sans-serif;
         width: 100% !important;
         padding: 12px 20px !important;
         margin: 8px 0 !important;
@@ -106,6 +109,12 @@ export default class ModalCustomizer {
     .eve-modal-title {
         font-size: larger !important;
         font-weight: bold !important;
+        font-family: Muli, Arial, Helvetica, sans-serif;
+        color: #4d4d4f !important;
+    }
+
+    .eve-modal-body {
+        font-family: Muli, Arial, Helvetica, sans-serif;
     }
     
     #eve-modal-overlay { 
