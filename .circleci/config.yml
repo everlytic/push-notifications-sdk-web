@@ -18,7 +18,7 @@ jobs:
 
             - run:
                   name: Deploy src files to S3
-                  command: aws s3 sync src/ s3://everlytic-push-notifications-sdk-web
+                  command: aws s3 sync src/ s3://everlytic-push-notifications-sdk-web --cache-control="max-age=300"
     deploy-master:
         docker:
             - image: circleci/node:7.10
@@ -51,7 +51,7 @@ jobs:
 
             - run:
                   name: Deploy min files to S3
-                  command: aws s3 sync dist/ s3://everlytic-push-notifications-sdk-web
+                  command: aws s3 sync dist/ s3://everlytic-push-notifications-sdk-web --cache-control="max-age=300"
 workflows:
     version: 2
     build-deploy-staging:

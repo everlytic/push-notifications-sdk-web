@@ -34,7 +34,7 @@ window.EverlyticPushSDK = new function () {
         initializeServiceWorker(config);
     };
 
-    this.subscribeAnonymous123 = () => {
+    this.subscribeAnonymous = () => {
         return this.subscribe({"email": anonymousEmail});
     };
 
