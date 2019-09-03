@@ -28,7 +28,6 @@ self.addEventListener('push', function (event) {
     }));
 });
 
-// TODO CHECK THAT THIS STILL WORKS WITH CLOSE BUTTON
 self.addEventListener('notificationclose', function(event) {
     event.waitUntil(new Promise(function(resolve, reject) {
         talkToEverlytic('dismissals', {
@@ -94,11 +93,11 @@ function talkToEverlytic(type, data, successCallback, errorCallback) {
         throw 'Invalid event type';
     }
 
-    loadSettings((settings) => {
+    loadSettings(function(settings) {
         let install = '';
         let projectUuid = '';
 
-        settings.forEach((setting) => {
+        settings.forEach(function(setting) {
             if (setting.id === 'install') {
                 install = setting.data;
             } else if (setting.id === 'projectUuid') {
@@ -118,13 +117,13 @@ function talkToEverlytic(type, data, successCallback, errorCallback) {
                 },
                 body: JSON.stringify(data)
             }
-        ).then((result) => {
+        ).then(function (result) {
             if (successCallback && successCallback instanceof Function) {
-                result.json().then((jsonResult) => {
+                result.json().then(function(jsonResult) {
                     successCallback(jsonResult);
                 });
             }
-        }).catch((err) => {
+        }).catch(function (err) {
             console.error(err);
             if (errorCallback && errorCallback instanceof Function) {
                 errorCallback(err);
@@ -140,7 +139,7 @@ function talkToEverlytic(type, data, successCallback, errorCallback) {
 function openIndexedDB () {
     let openDB = indexedDB.open("everlytic", 1);
 
-    openDB.onupgradeneeded = () => {
+    openDB.onupgradeneeded = function() {
         let db = {};
         db.result = openDB.result;
         db.store = db.result.createObjectStore("settings", {keyPath: "id"});
@@ -161,7 +160,7 @@ function getStoreIndexedDB (openDB) {
 function saveSettings (settings, successCallback) {
     let openDB = openIndexedDB();
 
-    openDB.onsuccess = () => {
+    openDB.onsuccess = function() {
         let db = getStoreIndexedDB(openDB);
         for (let key in settings) {
             if (!settings.hasOwnProperty(key)) continue;
@@ -176,16 +175,28 @@ function saveSettings (settings, successCallback) {
 
 function loadSettings (callback) {
     let openDB = openIndexedDB();
-
-    openDB.onsuccess = () => {
+    openDB.onsuccess = function() {
         let db = getStoreIndexedDB(openDB);
-        let getData = db.store.getAll();
 
-        getData.onsuccess = () => {
-            callback(getData.result);
-        };
+        if ('getAll' in db.store) {
+            db.store.getAll().onsuccess = function(event) {
+                callback(event.target.result);
+            };
+        } else {
+            // Fallback to the traditional cursor approach if getAll isn't supported.
+            let settings = [];
+            db.store.openCursor().onsuccess = function(event) {
+                let cursor = event.target.result;
+                if (cursor) {
+                    settings.push(cursor.value);
+                    cursor.continue();
+                } else {
+                    callback(settings);
+                }
+            };
+        }
 
-        db.tx.oncomplete = () => {
+        db.tx.oncomplete = function() {
             db.result.close();
         };
     };
@@ -197,10 +208,10 @@ function loadSettings (callback) {
  ** Other random stuff **
  ************************/
 
-self.addEventListener('install', (event) => {
+self.addEventListener('install', function(event) {
     event.waitUntil(self.skipWaiting()); // Activate worker immediately
 });
 
-self.addEventListener('activate', (event) => {
+self.addEventListener('activate', function(event) {
     event.waitUntil(self.clients.claim()); // Become available to all pages
 });
