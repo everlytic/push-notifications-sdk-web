@@ -1,6 +1,6 @@
 {
   "name": "push-notifications-sdk-web",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Everlyic Push Notications Web SDK",
   "repository": {
     "type": "git",
