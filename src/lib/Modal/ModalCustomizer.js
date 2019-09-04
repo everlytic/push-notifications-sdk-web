@@ -22,7 +22,7 @@ export default class ModalCustomizer {
         this.modal.open({
             lock: true,
             content: this.getModalBasicCss() + `
-<form id="${this.formId}" name="${this.formId}" action="#">
+<form id="${this.formId}" name="${this.formId}" action="#" novalidate>
 <table width="100%">
 <tr>
     <td><img src="${iconSrc}" class="eve-modal-icon" /></td>
