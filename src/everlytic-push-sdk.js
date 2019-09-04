@@ -214,7 +214,11 @@ window.EverlyticPushSDK = new function () {
                     outputDebug('[SW] Service worker has been registered');
 
                     if (config.autoSubscribe) {
-                        response.then(that.subscribeAnonymous);
+                        response.then(() => {
+                            that.subscribeWithAskEmailPrompt().catch((err) => {
+                                console.warn(err);
+                            })
+                        });
                     }
                 } else {
                     outputDebug('[SW] Service worker has been registered, but not loaded. Reload page.');
@@ -340,7 +344,7 @@ window.EverlyticPushSDK = new function () {
     function outputDebug(string)
     {
         if (debug) {
-            console.warn(string);
+            console.info(string);
         }
     }
 };
