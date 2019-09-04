@@ -199,6 +199,8 @@ export default class ModalCustomizer {
         }
         .eve-modal-icon {
             width: 100% !important;
+            visibility: hidden !important;
+            position: absolute !important;
         }
     }
 </style>`;

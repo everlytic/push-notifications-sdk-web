@@ -49,8 +49,8 @@ export default class ModalHandler {
                             confirmCallback(anonymousEmail);
                         },
                     },
-                    'Subscribe with email',
-                    'Subscribe anonymously'
+                    'Subscribe',
+                    'Anonymous'
                 );
             },
             cancelCallback
