@@ -221,8 +221,13 @@ window.EverlyticPushSDK = new function () {
                         });
                     }
                 } else {
-                    outputDebug('[SW] Service worker has been registered, but not loaded. Reload page.');
-                    // window.location.reload(); // TODO Fix this.
+                    outputDebug('[SW] Service worker has been registered, but not loaded.');
+                    if (config.installImmediately) {
+                        outputDebug('[SW] `installImmediately` set, reloading page.');
+                        window.location.reload();
+                    } else {
+                        outputDebug('[SW] Pass in the `installImmediately` flag to reload the page automatically.');
+                    }
                 }
             },
             (e) => {
