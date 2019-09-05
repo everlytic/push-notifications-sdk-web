@@ -23,28 +23,26 @@ export default class ModalCustomizer {
             lock: true,
             content: this.getModalBasicCss() + `
 <form id="${this.formId}" name="${this.formId}" action="#">
-<table width="100%">
-<tr>
-    <td><img src="${iconSrc}" class="eve-modal-icon" /></td>
-    <td>
-        <div class="eve-modal-title">
-            ${title}
+<div style="display: table !important; padding: 0px 10px 10px 10px !important;">
+    <div style="display: table-row !important">
+        <div style="display: table-cell !important"><img src="${iconSrc}" class="eve-modal-icon" /></div>
+        <div style="display: table-cell !important; vertical-align: middle !important; padding-left:10px !important">
+            <div class="eve-modal-title">
+                ${title}
+            </div>
+            <br/>
+            <span class="eve-modal-body">${body}</span>
+            <br/>
+            <br/>
         </div>
-        <br/>
-        <span class="eve-modal-body">${body}</span>
-        <br/>
-        <br/>
-    </td>
-</tr>
-<tr>
-    <td colspan="2">
-        <div style="text-align:right !important;">
-            <input class="eve-modal-btn eve-modal-btn-grey" id="${this.cancelButtonId}" type="button" value="${cancelText}"/>
-            <input class="eve-modal-btn" id="${this.confirmButtonId}" type="submit" value="${confirmText}"/>
-        </div>    
-    </td>
-</tr>
-</table>
+    </div>
+</div>
+<div style="padding: 0px 10px 10px 10px !important;">
+    <div style="text-align:right !important;">
+        <input class="eve-modal-btn eve-modal-btn-grey" id="${this.cancelButtonId}" type="button" value="${cancelText}"/>
+        <input class="eve-modal-btn" id="${this.confirmButtonId}" type="submit" value="${confirmText}"/>
+    </div>    
+</div>
 </form>`,
             draggable: true,
             openCallback: () => {
