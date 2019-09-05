@@ -75,6 +75,10 @@ export default class ModalCustomizer {
     getModalBasicCss() {
         return `
 <style>
+    #eve-modal-form {
+        all:initial !important;
+    }
+
     .eve-modal-btn {
         all: initial !important;
         font-family: Muli, Arial, Helvetica, sans-serif !important;

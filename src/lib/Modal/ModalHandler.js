@@ -38,7 +38,7 @@ export default class ModalHandler {
         this.open(
             () => {
                 this.modalCustomizer.open(
-                    "Please enter your email address to receive Push Notifications.",
+                    "Please enter your email address to help us identify you.",
                     `<input class="eve-modal-input" type="email" placeholder="hello@example.com" id="${emailInputId}" name="${emailInputId}" required />`,
                     this.preflight.icon,
                     {
@@ -49,7 +49,7 @@ export default class ModalHandler {
                             confirmCallback(anonymousEmail);
                         },
                     },
-                    'Subscribe',
+                    'Identify Me',
                     'Anonymous'
                 );
             },
