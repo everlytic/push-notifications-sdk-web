@@ -76,7 +76,8 @@ export default class ModalCustomizer {
         return `
 <style>
     .eve-modal-btn {
-        font-family: Muli, Arial, Helvetica, sans-serif;
+        all: initial !important;
+        font-family: Muli, Arial, Helvetica, sans-serif !important;
         background-color: ${this.primaryColour} !important;
         border: none !important;
         color: white !important;
@@ -99,7 +100,8 @@ export default class ModalCustomizer {
     }
     
     .eve-modal-input {
-        font-family: Muli, Arial, Helvetica, sans-serif;
+        all: initial !important;
+        font-family: Muli, Arial, Helvetica, sans-serif !important;
         width: 100% !important;
         padding: 12px 20px !important;
         margin: 8px 0 !important;
