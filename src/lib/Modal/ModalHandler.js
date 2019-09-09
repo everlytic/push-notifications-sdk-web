@@ -49,7 +49,7 @@ export default class ModalHandler {
                             confirmCallback(anonymousEmail);
                         },
                     },
-                    'Identify Me',
+                    'Subscribe',
                     'Anonymous'
                 );
             },
