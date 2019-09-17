@@ -56,8 +56,8 @@ self.addEventListener('notificationclick', function(event) {
 
         if (event.notification.data.url && event.notification.data.url != '') {
             clients.openWindow(event.notification.data.url).then(function(){
+                event.notification.close();
                 recordClick(function(){
-                    event.notification.close();
                     resolve();
                 }, function() {
                     reject();
