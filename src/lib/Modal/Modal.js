@@ -1,6 +1,5 @@
 export default class Modal {
-    constructor ()
-    {
+    constructor() {
         this.settings = {};
 
         this.modalOverlay = document.createElement('div');
@@ -38,8 +37,7 @@ export default class Modal {
         document.body.appendChild(this.modalContainer);
     }
 
-    open(parameters)
-    {
+    open(parameters) {
         this.settings.width = parameters.width || this.defaultSettings.width;
         this.settings.height = parameters.height || this.defaultSettings.height;
         this.settings.lock = parameters.lock || this.defaultSettings.lock;
@@ -113,8 +111,7 @@ export default class Modal {
         }
     };
 
-    drag(e)
-    {
+    drag(e) {
         let xPosition = (window.event !== undefined) ? window.event.clientX : e.clientX,
             yPosition = (window.event !== undefined) ? window.event.clientY : e.clientY,
             differenceX = xPosition - this.modalContainer.offsetLeft,
@@ -133,8 +130,7 @@ export default class Modal {
         };
     };
 
-    close()
-    {
+    close() {
         this.modalContent.innerHTML = '';
         this.modalOverlay.setAttribute('style', '');
         this.modalOverlay.style.cssText = '';
@@ -157,8 +153,7 @@ export default class Modal {
         }
     };
 
-    center (parameters)
-    {
+    center(parameters) {
         let documentHeight = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight),
 
             modalWidth = Math.max(this.modalContainer.clientWidth, this.modalContainer.offsetWidth),

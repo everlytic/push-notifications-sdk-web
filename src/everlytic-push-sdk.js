@@ -1,18 +1,19 @@
 import ModalHandler from './lib/Modal/ModalHandler';
-import Device from './lib/Device';
+import PostData from './lib/PostData';
 import Helper from './lib/Helper';
+import Model from './lib/Database/Model';
+import PermissionRepo from './lib/Database/PermissionRepo';
+import ServiceWorkerManager from "./lib/ServiceWorkerManager";
 
 window.EverlyticPushSDK = new function () {
-    let worker = {
-        "file": "/load-worker.js"
-    };
-
     const anonymousEmail = 'anonymous@everlytic.com';
     let install = '';
     let publicKey = '';
     let projectUuid = '';
     let debug = false;
+
     let modalHandler = {};
+    let swManager = {};
 
     let that = this;
 
@@ -25,11 +26,8 @@ window.EverlyticPushSDK = new function () {
             debug = true;
         }
 
-        if (config.worker) {
-            worker = Object.assign(worker, config.worker);
-        }
-
         modalHandler = new ModalHandler(config.preflight);
+        swManager = new ServiceWorkerManager(config);
 
         initializeServiceWorker(config);
     };
@@ -39,29 +37,29 @@ window.EverlyticPushSDK = new function () {
     };
 
     this.subscribeWithAskEmailPrompt = (optionsParam) => {
-        let options = {force:false};
+        let options = {force: false};
         if (optionsParam) {
             options = Object.assign(options, optionsParam);
         }
 
         return new Promise((resolve, reject) => {
-            if (navigator.serviceWorker.controller) {
-                if (debug || window.localStorage.getItem('everlytic.permission_granted') !== 'no') {
-                    if (window.localStorage.getItem('everlytic.permission_granted') === 'yes' && !options.force) {
+            if (swManager.isInitialized()) {
+                if (debug || PermissionRepo.userHasNotDenied()) {
+                    if (PermissionRepo.userHasGranted() && !options.force) {
                         reject('User already subscribed. Use force option to ask anyway.');
                     } else {
                         modalHandler.openAskEmailPrompt(
                             anonymousEmail,
                             (email) => {
-                                subscribeContact({"email": email}).then( (result) => {
+                                subscribeContact({"email": email}).then((result) => {
                                     resolve(result);
                                 }).catch((err) => {
-                                    setLSPermissionDenied();
+                                    PermissionRepo.denyPermission();
                                     reject(err);
                                 });
                             },
                             () => {
-                                setLSPermissionDenied();
+                                PermissionRepo.denyPermission();
                                 reject('User denied pre-flight');
                             }
                         )
@@ -80,14 +78,13 @@ window.EverlyticPushSDK = new function () {
             throw 'contact.email is required.';
         }
         return new Promise((resolve, reject) => {
-            if (navigator.serviceWorker.controller) {
-                let pfPermission = window.localStorage.getItem('everlytic.permission_granted');
-                if (debug || pfPermission !== 'no') {
-                    if (pfPermission === 'yes') {
+            if (swManager.isInitialized()) {
+                if (debug || PermissionRepo.userHasNotDenied()) {
+                    if (PermissionRepo.userHasGranted()) {
                         subscribeContact(contact).then((result) => {
                             resolve(result);
                         }).catch((err) => {
-                            setLSPermissionDenied();
+                            PermissionRepo.denyPermission();
                             reject(err);
                         });
                     } else {
@@ -96,11 +93,11 @@ window.EverlyticPushSDK = new function () {
                                 subscribeContact(contact).then((result) => {
                                     resolve(result);
                                 }).catch((err) => {
-                                    setLSPermissionDenied();
+                                    PermissionRepo.denyPermission();
                                     reject(err);
                                 });
                             }, () => {
-                                setLSPermissionDenied();
+                                PermissionRepo.denyPermission();
                                 reject('User denied pre-flight');
                             }
                         );
@@ -115,11 +112,11 @@ window.EverlyticPushSDK = new function () {
     };
 
     this.unsubscribe = () => {
-        if (navigator.serviceWorker.controller) {
-            return unsubscribeFromServiceWorker().then(() => {
+        if (swManager.isInitialized()) {
+            return swManager.unsubscribe().then(() => {
                 let data = {
-                    'subscription_id': window.localStorage.getItem('everlytic.subscription_id'),
-                    'device_id': window.localStorage.getItem('everlytic.device_id'),
+                    'subscription_id': Model.get('subscription_id'),
+                    'device_id': Model.get('device_id'),
                     'datetime': new Date().toISOString(),
                     'metadata': {},
                 };
@@ -132,7 +129,7 @@ window.EverlyticPushSDK = new function () {
     };
 
     this.resetPreflightCheck = () => {
-        window.localStorage.removeItem('everlytic.permission_granted');
+        PermissionRepo.resetPermission();
     };
 
 
@@ -156,96 +153,95 @@ window.EverlyticPushSDK = new function () {
             }
         });
 
-        if (!('serviceWorker' in navigator)) {
-            throw 'Service workers are not supported by this browser';
-        }
-
-        if (!('PushManager' in window)) {
-            throw 'Push notifications are not supported by this browser';
-        }
-
-        if (!('showNotification' in ServiceWorkerRegistration.prototype)) {
-            throw 'Notifications are not supported by this browser';
-        }
-
-        if (Notification.permission === 'denied') {
-            throw 'Notifications are denied by the user';
-        }
+        swManager.checkSupported();
 
         let oldProjectUuid = window.localStorage.getItem('projectUuid');
 
-        // If the project changed, reset all data.
         if (oldProjectUuid !== projectUuid) {
             outputDebug('Old Project: ' + oldProjectUuid + ' does not match new Project: ' + projectUuid + ' - Resetting localstorage.');
-            window.localStorage.clear();
-            window.localStorage.setItem('projectUuid', projectUuid);
-
-            navigator.serviceWorker.getRegistrations().then((registrations) => {
-                for(let registration of registrations) {
-                    registration.unregister();
-                }
-
-                registerServiceWorker(config);
-            });
+            resetRegistration(config);
         } else {
             registerServiceWorker(config);
         }
     }
 
-    function registerServiceWorker(config)
-    {
-        if (!window.localStorage.getItem('everlytic.device_id')) {
-            window.localStorage.setItem('everlytic.device_id', Helper.uuidv4());
+    function resetRegistration(config) {
+        unsetEverlyticStorage();
+        window.localStorage.setItem('projectUuid', projectUuid);
+
+        navigator.serviceWorker.getRegistrations().then((registrations) => {
+            for (let registration of registrations) {
+                registration.unregister();
+            }
+
+            registerServiceWorker(config);
+        });
+    }
+
+    function unsetEverlyticStorage() {
+        Model.unset('fresh');
+        Model.unset('device_id');
+        Model.unset('subscription_id');
+        PermissionRepo.resetPermission();
+    }
+
+    function registerServiceWorker(config) {
+        if (!Model.get('device_id')) {
+            Model.set('device_id', Helper.uuidv4());
         }
 
-        navigator.serviceWorker.register(
-            worker.file,
-            {
-                updateViaCache: 'none'
-            }
-        ).then(
+        swManager.registerSW(
+            projectUuid,
+            install,
             function () {
-                if (navigator.serviceWorker.controller) {
-                    const response = postMessageToServiceWorker({
-                        'type': 'initialize',
-                        'projectUuid': projectUuid,
-                        'install': install
-                    });
-                    outputDebug('[SW] Service worker has been registered');
-
-                    if (config.autoSubscribe) {
-                        response.then(() => {
-                            that.subscribeWithAskEmailPrompt().catch((err) => {
-                                console.warn(err);
-                            })
-                        });
-                    }
+                outputDebug('[SW] Service worker has been registered, but not loaded.');
+                if (config.installImmediately) {
+                    outputDebug('[SW] `installImmediately` set, reloading page.');
+                    window.location.reload();
                 } else {
-                    outputDebug('[SW] Service worker has been registered, but not loaded.');
-                    if (config.installImmediately) {
-                        outputDebug('[SW] `installImmediately` set, reloading page.');
-                        window.location.reload();
-                    } else {
-                        outputDebug('[SW] Pass in the `installImmediately` flag to reload the page automatically.');
-                    }
+                    outputDebug('[SW] Pass in the `installImmediately` flag to reload the page automatically.');
                 }
             },
-            (e) => {
-                console.error('[SW] Service worker registration failed', e);
+            function (response) {
+                outputDebug('[SW] Service worker has been registered');
+                response.then(() => {
+                    if (config.autoSubscribe) {
+                        that.subscribeWithAskEmailPrompt().catch((err) => {
+                            console.warn(err);
+                        });
+                    }
+
+                    if (Model.get('device_id') && PermissionRepo.userHasGranted()) {
+                        updateTokenOnServer();
+                    }
+                });
             }
         );
     }
 
-    function subscribeContact (contact) {
-        return checkNotificationPermission().then(() => {
-            return navigator.serviceWorker.ready;
-        }).then((serviceWorkerRegistration) => {
-            return serviceWorkerRegistration.pushManager.subscribe({
-                userVisibleOnly: true,
-                applicationServerKey: Helper.urlBase64ToUint8Array(publicKey)
+    function updateTokenOnServer() {
+        return swManager.subscribe(publicKey, function (subscription) {
+            let data = PostData.getUpdateTokenData(subscription);
+
+            return makeRequest('update-token', data).then((response) => {
+                return new Promise((resolve, reject) => {
+                    if (response.data && response.data.subscription && response.data.subscription.pns_id) {
+                        Model.set("subscription_id", response.data.subscription.pns_id);
+                        resolve(response.data);
+                    } else {
+                        swManager.unsubscribe().then(() => {
+                            unsetEverlyticStorage();
+                            reject('Could not refresh token on Everlytic');
+                        });
+                    }
+                });
             });
-        }).then((subscription) => {
-            let data = Device.getData(projectUuid, contact, subscription);
+        });
+    }
+
+    function subscribeContact(contact) {
+        return swManager.subscribe(publicKey, function (subscription) {
+            let data = PostData.getSubscribeData(projectUuid, contact, subscription);
 
             if (contact.unique_id && contact.email !== anonymousEmail) {
                 data.contact.unique_id = contact.unique_id;
@@ -253,74 +249,22 @@ window.EverlyticPushSDK = new function () {
 
             return makeRequest('subscribe', data).then((response) => {
                 return new Promise((resolve, reject) => {
-                    if (response.data && response.data.subscription.pns_id) {
-                        window.localStorage.setItem("everlytic.subscription_id", response.data.subscription.pns_id);
+                    if (response.data && response.data.subscription && response.data.subscription.pns_id) {
+                        Model.set("subscription_id", response.data.subscription.pns_id);
                         resolve(response.data);
                     } else {
-                        unsubscribeFromServiceWorker().then(() => {
+                        swManager.unsubscribe().then(() => {
+                            unsetEverlyticStorage();
                             reject('Could not subscribe to Everlytic');
                         });
                     }
                 });
             });
-        }).catch((e) => {
-            if (Notification.permission === 'denied') {
-                outputDebug('Notifications are denied by the user.');
-            } else {
-                console.error('Impossible to subscribe to push notifications', e);
-            }
-            throw e;
-        });
-    }
-
-    function checkNotificationPermission() {
-        return new Promise((resolve, reject) => {
-            if (Notification.permission === 'denied') {
-                setLSPermissionDenied();
-                return reject(new Error('Push messages are blocked.'));
-            }
-
-            if (Notification.permission === 'granted') {
-                setLSPermissionGranted();
-                return resolve();
-            }
-
-            if (Notification.permission === 'default') {
-                return Notification.requestPermission().then((result) => {
-                    if (result !== 'granted') {
-                        setLSPermissionDenied();
-                        return reject(new Error('Bad permission result'));
-                    }
-
-                    setLSPermissionGranted();
-                    return resolve();
-                });
-            }
-        });
-    }
-
-    function setLSPermissionDenied() {
-        window.localStorage.setItem('everlytic.permission_granted', 'no');
-    }
-
-    function setLSPermissionGranted() {
-        window.localStorage.setItem('everlytic.permission_granted', 'yes');
-    }
-
-    function unsubscribeFromServiceWorker () {
-        return navigator.serviceWorker.ready.then((serviceWorkerRegistration) => {
-            return serviceWorkerRegistration.pushManager.getSubscription();
-        }).then((subscription) => {
-            if (!subscription) {
-                return Promise.resolve();
-            }
-
-            return subscription.unsubscribe();
         });
     }
 
     function makeRequest(type, data = {}) {
-        return postMessageToServiceWorker({
+        return swManager.sendMessageToSW({
             "type": type,
             'projectUuid': projectUuid,
             "install": install,
@@ -328,26 +272,7 @@ window.EverlyticPushSDK = new function () {
         });
     }
 
-    function postMessageToServiceWorker(data) {
-        return new Promise((resolve, reject) => {
-            let channel = new MessageChannel();
-            channel.port1.onmessage = (event) => {
-                if (event.data.error) {
-                    reject(event.data.error);
-                } else {
-                    resolve(event.data);
-                }
-            };
-
-            navigator.serviceWorker.controller.postMessage(
-                data,
-                [channel.port2]
-            );
-        });
-    }
-
-    function outputDebug(string)
-    {
+    function outputDebug(string) {
         if (debug) {
             console.info(string);
         }

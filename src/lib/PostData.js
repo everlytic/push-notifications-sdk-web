@@ -1,5 +1,5 @@
-export default class Device {
-    static getData(projectUuid, contact, subscription) {
+export default class PostData {
+    static getSubscribeData(projectUuid, contact, subscription) {
         return {
             'push_project_uuid': projectUuid,
             'contact': {
@@ -18,6 +18,17 @@ export default class Device {
             },
             'datetime': new Date().toISOString(),
             'metadata': {},
+        };
+    }
+
+    static getUpdateTokenData(subscription) {
+        return {
+            'contact': {
+                "push_token": JSON.stringify(subscription)
+            },
+            'device': {
+                'id': window.localStorage.getItem('everlytic.device_id')
+            }
         };
     }
 

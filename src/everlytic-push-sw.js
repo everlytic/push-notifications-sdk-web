@@ -1,5 +1,5 @@
 self.addEventListener('push', function (event) {
-    event.waitUntil(new Promise(function(resolve, reject) {
+    event.waitUntil(new Promise(function (resolve, reject) {
         if (!(self.Notification && self.Notification.permission === 'granted')) {
             reject();
         }
@@ -12,15 +12,15 @@ self.addEventListener('push', function (event) {
                 data: notification.data,
                 icon: notification.data.icon,
                 requireInteraction: true
-            }).then(function(){
+            }).then(function () {
                 talkToEverlytic('deliveries', {
                     'message_id': notification.data.message_id,
                     'subscription_id': notification.data.subscription_id,
                     'metadata': {},
                     'datetime': new Date().toISOString()
-                }, function(){
+                }, function () {
                     resolve();
-                }, function() {
+                }, function () {
                     reject();
                 });
             });
@@ -28,24 +28,24 @@ self.addEventListener('push', function (event) {
     }));
 });
 
-self.addEventListener('notificationclose', function(event) {
-    event.waitUntil(new Promise(function(resolve, reject) {
+self.addEventListener('notificationclose', function (event) {
+    event.waitUntil(new Promise(function (resolve, reject) {
         talkToEverlytic('dismissals', {
             'message_id': event.notification.data.message_id,
             'subscription_id': event.notification.data.subscription_id,
             'metadata': {},
             'datetime': new Date().toISOString()
-        }, function() {
+        }, function () {
             resolve();
-        }, function() {
+        }, function () {
             reject();
         });
     }));
 });
 
-self.addEventListener('notificationclick', function(event) {
-    event.waitUntil(new Promise(function(resolve, reject) {
-        let recordClick = function(successCallback, errorCallback) {
+self.addEventListener('notificationclick', function (event) {
+    event.waitUntil(new Promise(function (resolve, reject) {
+        let recordClick = function (successCallback, errorCallback) {
             talkToEverlytic('clicks', {
                 'message_id': event.notification.data.message_id,
                 'subscription_id': event.notification.data.subscription_id,
@@ -55,49 +55,49 @@ self.addEventListener('notificationclick', function(event) {
         };
 
         if (event.notification.data.url && event.notification.data.url != '') {
-            clients.openWindow(event.notification.data.url).then(function(){
+            clients.openWindow(event.notification.data.url).then(function () {
                 event.notification.close();
-                recordClick(function(){
+                recordClick(function () {
                     resolve();
-                }, function() {
+                }, function () {
                     reject();
                 });
             });
         } else {
-            recordClick(function(){
+            recordClick(function () {
                 resolve();
-            }, function() {
+            }, function () {
                 reject();
             });
         }
     }));
 });
 
-self.addEventListener('message', function(event) {
+self.addEventListener('message', function (event) {
     if (event.data.type === 'initialize') {
         saveSettings({
             'projectUuid': event.data.projectUuid,
             'install': event.data.install
-        }, function() {
-            event.ports[0].postMessage({'status':'success'});
+        }, function () {
+            event.ports[0].postMessage({'status': 'success'});
         });
-    } else if (['subscribe', 'unsubscribe'].indexOf(event.data.type) !== -1) {
-        talkToEverlytic(event.data.type, event.data.data, function(result){
+    } else if (['subscribe', 'unsubscribe', 'update-token'].indexOf(event.data.type) !== -1) {
+        talkToEverlytic(event.data.type, event.data.data, function (result) {
             event.ports[0].postMessage(result);
         });
     }
 });
 
 function talkToEverlytic(type, data, successCallback, errorCallback) {
-    if (['subscribe', 'unsubscribe', 'deliveries', 'clicks', 'dismissals'].indexOf(type) === -1) {
+    if (['subscribe', 'unsubscribe', 'update-token', 'deliveries', 'clicks', 'dismissals'].indexOf(type) === -1) {
         throw 'Invalid event type';
     }
 
-    loadSettings(function(settings) {
+    loadSettings(function (settings) {
         let install = '';
         let projectUuid = '';
 
-        settings.forEach(function(setting) {
+        settings.forEach(function (setting) {
             if (setting.id === 'install') {
                 install = setting.data;
             } else if (setting.id === 'projectUuid') {
@@ -119,7 +119,7 @@ function talkToEverlytic(type, data, successCallback, errorCallback) {
             }
         ).then(function (result) {
             if (successCallback && successCallback instanceof Function) {
-                result.json().then(function(jsonResult) {
+                result.json().then(function (jsonResult) {
                     successCallback(jsonResult);
                 });
             }
@@ -136,10 +136,10 @@ function talkToEverlytic(type, data, successCallback, errorCallback) {
  ** Start of IndexDB Stuff **
  ****************************/
 
-function openIndexedDB () {
+function openIndexedDB() {
     let openDB = indexedDB.open("everlytic", 1);
 
-    openDB.onupgradeneeded = function() {
+    openDB.onupgradeneeded = function () {
         let db = {};
         db.result = openDB.result;
         db.store = db.result.createObjectStore("settings", {keyPath: "id"});
@@ -148,7 +148,7 @@ function openIndexedDB () {
     return openDB;
 }
 
-function getStoreIndexedDB (openDB) {
+function getStoreIndexedDB(openDB) {
     let db = {};
     db.result = openDB.result;
     db.tx = db.result.transaction("settings", "readwrite");
@@ -157,10 +157,10 @@ function getStoreIndexedDB (openDB) {
     return db;
 }
 
-function saveSettings (settings, successCallback) {
+function saveSettings(settings, successCallback) {
     let openDB = openIndexedDB();
 
-    openDB.onsuccess = function() {
+    openDB.onsuccess = function () {
         let db = getStoreIndexedDB(openDB);
         for (let key in settings) {
             if (!settings.hasOwnProperty(key)) continue;
@@ -173,19 +173,19 @@ function saveSettings (settings, successCallback) {
     };
 }
 
-function loadSettings (callback) {
+function loadSettings(callback) {
     let openDB = openIndexedDB();
-    openDB.onsuccess = function() {
+    openDB.onsuccess = function () {
         let db = getStoreIndexedDB(openDB);
 
         if ('getAll' in db.store) {
-            db.store.getAll().onsuccess = function(event) {
+            db.store.getAll().onsuccess = function (event) {
                 callback(event.target.result);
             };
         } else {
             // Fallback to the traditional cursor approach if getAll isn't supported.
             let settings = [];
-            db.store.openCursor().onsuccess = function(event) {
+            db.store.openCursor().onsuccess = function (event) {
                 let cursor = event.target.result;
                 if (cursor) {
                     settings.push(cursor.value);
@@ -196,7 +196,7 @@ function loadSettings (callback) {
             };
         }
 
-        db.tx.oncomplete = function() {
+        db.tx.oncomplete = function () {
             db.result.close();
         };
     };
@@ -208,10 +208,10 @@ function loadSettings (callback) {
  ** Other random stuff **
  ************************/
 
-self.addEventListener('install', function(event) {
+self.addEventListener('install', function (event) {
     event.waitUntil(self.skipWaiting()); // Activate worker immediately
 });
 
-self.addEventListener('activate', function(event) {
+self.addEventListener('activate', function (event) {
     event.waitUntil(self.clients.claim()); // Become available to all pages
 });
