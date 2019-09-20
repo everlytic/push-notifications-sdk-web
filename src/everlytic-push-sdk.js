@@ -29,6 +29,8 @@ window.EverlyticPushSDK = new function () {
         modalHandler = new ModalHandler(config.preflight);
         swManager = new ServiceWorkerManager(config);
 
+        freshenEveryHour();
+
         initializeServiceWorker(config);
     };
 
@@ -137,6 +139,15 @@ window.EverlyticPushSDK = new function () {
      ***** Private Functions *****
      *****************************/
 
+    function freshenEveryHour() {
+        const diffTime = Math.abs(new Date() - new Date(Model.get('date')));
+        const diffHours = Math.ceil(diffTime / (1000 * 60 * 60));
+
+        if (diffHours > 1) {
+            swManager.freshen();
+            Model.set('date', Date().toString())
+        }
+    }
 
     function initializeServiceWorker(config) {
         const configDecoded = atob(config.hash);
