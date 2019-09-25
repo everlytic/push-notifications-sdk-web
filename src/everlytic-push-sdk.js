@@ -46,7 +46,7 @@ window.EverlyticPushSDK = new function () {
 
         return new Promise((resolve, reject) => {
             if (swManager.isInitialized()) {
-                if (debug || PermissionRepo.userHasNotDenied()) {
+                if (PermissionRepo.userHasNotDenied()) {
                     if (PermissionRepo.userHasGranted() && !options.force) {
                         reject('User already subscribed. Use force option to ask anyway.');
                     } else {
@@ -68,6 +68,7 @@ window.EverlyticPushSDK = new function () {
                     }
                 } else {
                     reject('User has denied pre-flight recently. You will need to reset this manually.');
+                    outputDebug('You can reset `pre-flight` now while debugging easily by clearing your browsers localStorage.');
                 }
             } else {
                 reject('Service Worker is not yet ready. Waiting on page reload.');
@@ -81,7 +82,7 @@ window.EverlyticPushSDK = new function () {
         }
         return new Promise((resolve, reject) => {
             if (swManager.isInitialized()) {
-                if (debug || PermissionRepo.userHasNotDenied()) {
+                if (PermissionRepo.userHasNotDenied()) {
                     if (PermissionRepo.userHasGranted()) {
                         subscribeContact(contact).then((result) => {
                             resolve(result);
@@ -106,6 +107,7 @@ window.EverlyticPushSDK = new function () {
                     }
                 } else {
                     reject('User has denied pre-flight recently. You will need to reset this manually.');
+                    outputDebug('You can reset `pre-flight` now while debugging easily by clearing your browsers localStorage.');
                 }
             } else {
                 reject('Service Worker is not yet ready. Waiting on page reload.');
@@ -122,6 +124,8 @@ window.EverlyticPushSDK = new function () {
                     'datetime': new Date().toISOString(),
                     'metadata': {},
                 };
+
+                this.resetPreflightCheck();
 
                 return makeRequest('unsubscribe', data);
             });
@@ -169,7 +173,7 @@ window.EverlyticPushSDK = new function () {
         let oldProjectUuid = window.localStorage.getItem('projectUuid');
 
         if (oldProjectUuid !== projectUuid) {
-            outputDebug('Old Project: ' + oldProjectUuid + ' does not match new Project: ' + projectUuid + ' - Resetting localstorage.');
+            outputDebug('Old Project: ' + oldProjectUuid + ' does not match new Project: ' + projectUuid + ' - Resetting registration.');
             resetRegistration(config);
         } else {
             registerServiceWorker(config);
