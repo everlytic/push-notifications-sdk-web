@@ -1,3 +1,5 @@
+import Model from "./Database/Model";
+
 export default class PostData {
     static getSubscribeData(projectUuid, contact, subscription) {
         return {
@@ -11,7 +13,7 @@ export default class PostData {
                 'version': navigator.appVersion
             },
             'device': {
-                'id': window.localStorage.getItem('everlytic.device_id'),
+                'id': Model.get('device_id'),
                 'manufacturer': navigator.appCodeName,
                 'model': navigator.userAgent,
                 'type': 'N/A'
@@ -27,8 +29,17 @@ export default class PostData {
                 "push_token": JSON.stringify(subscription)
             },
             'device': {
-                'id': window.localStorage.getItem('everlytic.device_id')
+                'id': Model.get('device_id')
             }
+        };
+    }
+
+    static getUnsubscribeData() {
+        return {
+            'subscription_id': Model.get('subscription_id'),
+            'device_id': Model.get('device_id'),
+            'datetime': new Date().toISOString(),
+            'metadata': {},
         };
     }
 

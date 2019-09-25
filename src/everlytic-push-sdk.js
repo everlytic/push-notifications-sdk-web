@@ -118,16 +118,8 @@ window.EverlyticPushSDK = new function () {
     this.unsubscribe = () => {
         if (swManager.isInitialized()) {
             return swManager.unsubscribe().then(() => {
-                let data = {
-                    'subscription_id': Model.get('subscription_id'),
-                    'device_id': Model.get('device_id'),
-                    'datetime': new Date().toISOString(),
-                    'metadata': {},
-                };
-
                 this.resetPreflightCheck();
-
-                return makeRequest('unsubscribe', data);
+                return makeRequest('unsubscribe', PostData.getUnsubscribeData());
             });
         } else {
             return Promise.reject('Service Worker not ready, please reload the page.');
@@ -236,9 +228,7 @@ window.EverlyticPushSDK = new function () {
 
     function updateTokenOnServer() {
         return swManager.subscribe(publicKey, function (subscription) {
-            let data = PostData.getUpdateTokenData(subscription);
-
-            return makeRequest('update-token', data).then((response) => {
+            return makeRequest('update-token', PostData.getUpdateTokenData(subscription)).then((response) => {
                 return new Promise((resolve, reject) => {
                     if (response.data && response.data.subscription && response.data.subscription.pns_id) {
                         Model.set("subscription_id", response.data.subscription.pns_id);
