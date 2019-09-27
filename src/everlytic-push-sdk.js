@@ -217,11 +217,11 @@ window.EverlyticPushSDK = new function () {
                             console.warn(err);
                         });
                     }
-
-                    if (Model.get('device_id') && PermissionRepo.userHasGranted()) {
-                        updateTokenOnServer();
-                    }
                 });
+
+                if (Model.get('device_id') && PermissionRepo.userHasGranted()) {
+                    updateTokenOnServer();
+                }
             }
         );
     }
