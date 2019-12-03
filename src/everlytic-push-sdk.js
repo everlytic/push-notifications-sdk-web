@@ -31,7 +31,7 @@ window.EverlyticPushSDK = new function () {
 
         freshenEveryHour();
 
-        initializeServiceWorker(config);
+        return initializeServiceWorker(config);
     };
 
     this.subscribeAnonymous = () => {
@@ -76,14 +76,15 @@ window.EverlyticPushSDK = new function () {
         });
     };
 
-    this.subscribe = (contact) => {
+    this.subscribe = (contact, disableDoubleOptIn) => {
         if (!contact.email) {
             throw 'contact.email is required.';
         }
+
         return new Promise((resolve, reject) => {
             if (swManager.isInitialized()) {
                 if (PermissionRepo.userHasNotDenied()) {
-                    if (PermissionRepo.userHasGranted()) {
+                    if (disableDoubleOptIn || PermissionRepo.userHasGranted()) {
                         subscribeContact(contact).then((result) => {
                             resolve(result);
                         }).catch((err) => {
@@ -166,9 +167,9 @@ window.EverlyticPushSDK = new function () {
 
         if (oldProjectUuid !== projectUuid) {
             outputDebug('Old Project: ' + oldProjectUuid + ' does not match new Project: ' + projectUuid + ' - Resetting registration.');
-            resetRegistration(config);
+            return resetRegistration(config);
         } else {
-            registerServiceWorker(config);
+            return registerServiceWorker(config);
         }
     }
 
@@ -176,12 +177,12 @@ window.EverlyticPushSDK = new function () {
         unsetEverlyticStorage();
         window.localStorage.setItem('projectUuid', projectUuid);
 
-        navigator.serviceWorker.getRegistrations().then((registrations) => {
+        return navigator.serviceWorker.getRegistrations().then((registrations) => {
             for (let registration of registrations) {
                 registration.unregister();
             }
 
-            registerServiceWorker(config);
+            return registerServiceWorker(config);
         });
     }
 
@@ -197,7 +198,7 @@ window.EverlyticPushSDK = new function () {
             Model.set('device_id', Helper.uuidv4());
         }
 
-        swManager.registerSW(
+        return swManager.registerSW(
             projectUuid,
             install,
             function () {

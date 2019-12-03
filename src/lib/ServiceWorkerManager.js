@@ -16,7 +16,7 @@ export default class ServiceWorkerManager {
     registerSW(projectUuid, install, beforeInitializedCallback, afterInitializedCallback) {
         let currentHour = Math.floor(Date.now() / (1000 * 60 * 60));
 
-        navigator.serviceWorker.register(
+        return navigator.serviceWorker.register(
             this.worker.file + '?h=' + currentHour.toString(),
             {
                 updateViaCache: 'none'
