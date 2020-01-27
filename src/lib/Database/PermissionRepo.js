@@ -6,7 +6,14 @@ export default class PermissionRepo {
     }
 
     static userHasNotDenied() {
-        return Model.get('permission_granted') !== 'no';
+        return Model.get('permission_granted') !== 'no'
+    }
+
+    static userHasNotDeniedOrExpired() {
+        const diffTime = Math.abs(new Date() - new Date(Model.get('date')));
+        const diffHours = Math.ceil(diffTime / (1000 * 60 * 60));
+
+        return this.userHasNotDenied() || diffHours > 720;
     }
 
     static userHasNotBeenAsked() {

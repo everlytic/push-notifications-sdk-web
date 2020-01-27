@@ -34,8 +34,8 @@ window.EverlyticPushSDK = new function () {
         return initializeServiceWorker(config);
     };
 
-    this.subscribeAnonymous = () => {
-        return this.subscribe({"email": anonymousEmail});
+    this.subscribeAnonymous = (disableDoubleOptIn) => {
+        return this.subscribe({"email": anonymousEmail}, disableDoubleOptIn);
     };
 
     this.subscribeWithAskEmailPrompt = (optionsParam) => {
@@ -46,7 +46,7 @@ window.EverlyticPushSDK = new function () {
 
         return new Promise((resolve, reject) => {
             if (swManager.isInitialized()) {
-                if (PermissionRepo.userHasNotDenied()) {
+                if (PermissionRepo.userHasNotDeniedOrExpired()) {
                     if (PermissionRepo.userHasGranted() && !options.force) {
                         reject('User already subscribed. Use force option to ask anyway.');
                     } else {
@@ -67,7 +67,7 @@ window.EverlyticPushSDK = new function () {
                         )
                     }
                 } else {
-                    reject('User has denied pre-flight recently. You will need to reset this manually.');
+                    reject('User has denied pre-flight recently. You will need to reset this manually. Or wait 30 days');
                     outputDebug('You can reset `pre-flight` now while debugging easily by clearing your browsers localStorage.');
                 }
             } else {
@@ -83,7 +83,7 @@ window.EverlyticPushSDK = new function () {
 
         return new Promise((resolve, reject) => {
             if (swManager.isInitialized()) {
-                if (PermissionRepo.userHasNotDenied()) {
+                if (PermissionRepo.userHasNotDeniedOrExpired()) {
                     if (disableDoubleOptIn || PermissionRepo.userHasGranted()) {
                         subscribeContact(contact).then((result) => {
                             resolve(result);
@@ -140,7 +140,7 @@ window.EverlyticPushSDK = new function () {
         const diffTime = Math.abs(new Date() - new Date(Model.get('date')));
         const diffHours = Math.ceil(diffTime / (1000 * 60 * 60));
 
-        if (diffHours > 1) {
+        if (PermissionRepo.userHasNotDenied() && diffHours > 1) {
             swManager.freshen();
             Model.set('date', Date().toString())
         }
