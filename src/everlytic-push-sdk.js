@@ -62,6 +62,7 @@ window.EverlyticPushSDK = new function () {
                             },
                             () => {
                                 PermissionRepo.denyPermission();
+                                Model.set('date', Date().toString());
                                 reject('User denied pre-flight');
                             }
                         )
@@ -102,6 +103,7 @@ window.EverlyticPushSDK = new function () {
                                 });
                             }, () => {
                                 PermissionRepo.denyPermission();
+                                Model.set('date', Date().toString());
                                 reject('User denied pre-flight');
                             }
                         );
@@ -142,7 +144,9 @@ window.EverlyticPushSDK = new function () {
 
         if (PermissionRepo.userHasNotDenied() && diffHours > 1) {
             swManager.freshen();
-            Model.set('date', Date().toString())
+            Model.set('date', Date().toString());
+        } else if (PermissionRepo.userHasNotDeniedOrExpired()) {
+            swManager.freshen();
         }
     }
 
