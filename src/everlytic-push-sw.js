@@ -1,31 +1,34 @@
 self.addEventListener('push', function (event) {
-    event.waitUntil(new Promise(function (resolve, reject) {
-        if (!(self.Notification && self.Notification.permission === 'granted')) {
-            reject();
-        }
+    if (event.data) {
+        let notification = JSON.parse(event.data.text());
 
-        if (event.data) {
-            let notification = JSON.parse(event.data.text());
-
-            self.registration.showNotification(notification.title, {
-                body: notification.body,
-                data: notification.data,
-                icon: notification.data.icon,
-                requireInteraction: true
-            }).then(function () {
-                talkToEverlytic('deliveries', {
-                    'message_id': notification.data.message_id,
-                    'subscription_id': notification.data.subscription_id,
-                    'metadata': {},
-                    'datetime': new Date().toISOString()
-                }, function () {
-                    resolve();
-                }, function () {
-                    reject();
-                });
+        const analyticsPromise = new Promise(function (resolve, reject) {
+            talkToEverlytic('deliveries', {
+                'message_id': notification.data.message_id,
+                'subscription_id': notification.data.subscription_id,
+                'metadata': {},
+                'datetime': new Date().toISOString()
+            }, function () {
+                resolve();
+            }, function () {
+                reject();
             });
-        }
-    }));
+        });
+
+        const pushInfoPromise = self.registration.showNotification(notification.title, {
+            body: notification.body,
+            data: notification.data,
+            icon: notification.data.icon,
+            requireInteraction: true
+        });
+
+        const promiseChain = Promise.all([
+            analyticsPromise,
+            pushInfoPromise
+        ]);
+
+        event.waitUntil(promiseChain);
+    }
 });
 
 self.addEventListener('notificationclose', function (event) {
