@@ -15,12 +15,28 @@ self.addEventListener('push', function (event) {
             });
         });
 
-        const pushInfoPromise = self.registration.showNotification(notification.title, {
+        let options = {
             body: notification.body,
             data: notification.data,
             icon: notification.data.icon,
             requireInteraction: true
-        });
+        }
+
+        if (notification.data.hasOwnProperty('image')) {
+            options['image'] = notification.data.image;
+        }
+
+        if (notification.data.hasOwnProperty('actions')) {
+            options.actions = [];
+            notification.data.actions.forEach(function (action) {
+                options.actions.push({
+                    action: action.action,
+                    title: action.title,
+                });
+            });
+        }
+
+        const pushInfoPromise = self.registration.showNotification(notification.title, options);
 
         const promiseChain = Promise.all([
             analyticsPromise,
@@ -57,7 +73,7 @@ self.addEventListener('notificationclick', function (event) {
             }, successCallback, errorCallback);
         };
 
-        if (event.notification.data.url && event.notification.data.url != '') {
+        if (event.action === '' && event.notification.data.url && event.notification.data.url != '') {
             clients.openWindow(event.notification.data.url).then(function () {
                 event.notification.close();
                 recordClick(function () {
@@ -65,6 +81,19 @@ self.addEventListener('notificationclick', function (event) {
                 }, function () {
                     reject();
                 });
+            });
+        } else if (event.notification.data.hasOwnProperty('actions')) {
+            event.notification.data.actions.forEach(function (action) {
+                if (event.action === action.action) {
+                    clients.openWindow(action.url).then(function () {
+                        event.notification.close();
+                        recordClick(function () {
+                            resolve();
+                        }, function () {
+                            reject();
+                        });
+                    });
+                }
             });
         } else {
             recordClick(function () {
