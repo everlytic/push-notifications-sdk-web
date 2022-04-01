@@ -50,4 +50,4 @@ module.exports = [{
     output: {
         'filename': 'everlytic-push-sw-' + version + '.min.js',
     }
-},];
+}];
