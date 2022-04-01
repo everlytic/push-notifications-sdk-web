@@ -155,7 +155,7 @@ export default class ModalCustomizer {
     } 
     
     #eve-modal-close { 
-        background: #fff url('https://d1vjq17neg4i9o.cloudfront.net/modal-close.png') no-repeat center center !important; 
+        background: #fff url('https://pushsdk.mailercdn.net/modal-close.png') no-repeat center center !important; 
         cursor: pointer !important; 
         display: block !important; 
         filter: alpha(opacity=60) !important; 
