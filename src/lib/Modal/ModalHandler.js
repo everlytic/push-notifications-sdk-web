@@ -5,7 +5,7 @@ export default class ModalHandler {
         this.preflight = {
             "title": "We would like to send you notifications for the latest news and updates.",
             "message": "Unsubscribe anytime in your browser settings.",
-            "icon": "https://d1vjq17neg4i9o.cloudfront.net/icon.png",
+            "icon": "https://pushsdk.mailercdn.net/icon.png",
             "primaryColour": "#94d229"
         };
 
